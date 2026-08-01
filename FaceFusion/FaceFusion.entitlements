@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- The models are ~560 MB on disk and considerably more once Core ML has
+	     compiled and paged them in. Without this, a 4 GB iPhone is jetsammed
+	     part-way through a video export. Available to every developer account;
+	     if automatic signing ever objects, deleting this key is safe — the app
+	     then has to be run with "Enhance detail" off on small devices. -->
+	<key>com.apple.developer.kernel.increased-memory-limit</key>
+	<true/>
+</dict>
+</plist>
