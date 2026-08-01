@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		AA00000000000000000032 /* onnxruntime in Frameworks */ = {isa = PBXBuildFile; productRef = AA00000000000000000031 /* onnxruntime */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		0FB45CAC301DE4C400EFE626 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -22,10 +26,6 @@
 			remoteInfo = FaceFusion;
 		};
 /* End PBXContainerItemProxy section */
-
-/* Begin PBXBuildFile section */
-		AA00000000000000000032 /* onnxruntime in Frameworks */ = {isa = PBXBuildFile; productRef = AA00000000000000000031 /* onnxruntime */; };
-/* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		0FB45C9E301DE4C300EFE626 /* FaceFusion.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FaceFusion.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -405,6 +405,7 @@
 				CODE_SIGN_ENTITLEMENTS = FaceFusion/FaceFusion.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = HPL74FCW8E;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = FaceFusion;
@@ -441,6 +442,7 @@
 				CODE_SIGN_ENTITLEMENTS = FaceFusion/FaceFusion.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = HPL74FCW8E;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = FaceFusion;
