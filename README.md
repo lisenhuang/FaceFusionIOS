@@ -191,7 +191,16 @@ xcodebuild -project FaceFusion.xcodeproj -scheme FaceFusion \
 Swift Package Manager resolves ONNX Runtime 1.24.2 automatically. Build via the
 **scheme**, not `-target`: SPM module maps are only generated for scheme builds.
 
-Deployment target is **iOS 18**, iPhone and iPad. The app declares
+Deployment target is **iOS 17**, iPhone and iPad. That is the floor the code
+itself sets: `@Observable` is iOS 17.0, and it is the only thing above 16.
+Nothing else reaches higher — `.onGeometryChange` shipped in the iOS 18 SDK but
+is annotated back to 16, and ONNX Runtime declares `.iOS(.v15)`. Note that on
+iPhone this buys no extra hardware — iOS 17 and 18 share the same A12 floor
+(iPhone XS/XR) — only users who have not updated. On iPad it does add the 6th
+generation and the 2017 Pros, which are A10/A10X: no Neural Engine, so Core ML
+runs on the GPU there, and 2 GB of RAM makes *Enhance detail* a poor bet.
+
+The app declares
 `com.apple.developer.kernel.increased-memory-limit`, which it needs because the
 models are large; if automatic signing ever objects, removing that key from
 `FaceFusion/FaceFusion.entitlements` is safe — small devices then have to run
