@@ -53,7 +53,6 @@ struct SettingsView: View {
                 performanceSection
                 modelsSection
                 privacySection
-                aboutSection
             }
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.inline)
@@ -504,40 +503,6 @@ struct SettingsView: View {
                 .foregroundStyle(.tint)
         }
         .accessibilityElement(children: .combine)
-    }
-
-    // MARK: - About
-
-    private var aboutSection: some View {
-        Section {
-            LabeledContent("Version", value: versionString)
-
-            ForEach(catalogue) { descriptor in
-                LabeledContent {
-                    Text(descriptor.license)
-                        .font(.callout)
-                        .multilineTextAlignment(.trailing)
-                } label: {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(descriptor.modelID?.displayName ?? descriptor.id)
-                        Text(descriptor.vendor)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-            }
-        } header: {
-            Text("About")
-        } footer: {
-            Text("The models come from their original public release. Each keeps its own licence, listed above.")
-        }
-    }
-
-    private var versionString: String {
-        let info = Bundle.main.infoDictionary
-        let short = info?["CFBundleShortVersionString"] as? String ?? "—"
-        let build = info?["CFBundleVersion"] as? String ?? "—"
-        return "\(short) (\(build))"
     }
 
     // MARK: - Actions
