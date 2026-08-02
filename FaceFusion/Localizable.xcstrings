@@ -5627,6 +5627,7 @@
       }
     },
     "The face‑swapping models are published for non‑commercial research use. Only swap faces of people who have agreed to it." : {
+      "extractionState" : "stale",
       "localizations" : {
         "ja" : {
           "stringUnit" : {
