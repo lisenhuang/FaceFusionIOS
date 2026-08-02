@@ -437,6 +437,7 @@
       }
     },
     "About" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ja" : {
           "stringUnit" : {
@@ -5682,6 +5683,7 @@
       }
     },
     "The models come from their original public release. Each keeps its own licence, listed above." : {
+      "extractionState" : "stale",
       "localizations" : {
         "ja" : {
           "stringUnit" : {
@@ -6186,6 +6188,7 @@
       }
     },
     "Version" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ja" : {
           "stringUnit" : {
