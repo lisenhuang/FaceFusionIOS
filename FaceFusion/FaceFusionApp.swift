@@ -59,6 +59,10 @@ struct FaceFusionApp: App {
 
     @State private var hasClearedStaleExports = false
 
+    /// Set only when the App Store has something newer; see `UpdateChecker`.
+    @State private var availableUpdate: UpdateChecker.Update?
+    @State private var isShowingUpdate = false
+
     /// Points `Bundle.main` at the stored interface language before the first
     /// view exists.
     ///
@@ -73,6 +77,21 @@ struct FaceFusionApp: App {
         WindowGroup {
             RootView()
                 .environment(model)
+                // Once per launch, off the main path: the result arrives long
+                // after the first frame and nothing waits on it.
+                .task {
+                    guard let update = await UpdateChecker.check() else { return }
+                    availableUpdate = update
+                    isShowingUpdate = true
+                }
+                .alert("A new version is available",
+                       isPresented: $isShowingUpdate,
+                       presenting: availableUpdate) { update in
+                    Button("Update") { UIApplication.shared.open(update.storeURL) }
+                    Button("Not now", role: .cancel) { }
+                } message: { update in
+                    Text("Morphiqo \(update.version) is on the App Store. You have \(UpdateChecker.installedVersion).")
+                }
         }
         // Renders are written to a temporary folder and only moved to Photos or
         // to Files when the user says so, so a crash or a force-quit leaves the
