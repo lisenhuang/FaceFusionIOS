@@ -13,7 +13,7 @@
 import Testing
 import CoreGraphics
 import Foundation
-@testable import FaceFusion
+@testable import Morphiqo
 
 // MARK: - Ground truth
 //

@@ -35,4 +35,8 @@ enum EngineLog {
     /// category because "the GPU path quietly gave up" is the one failure that
     /// costs speed without costing correctness, so it has to be findable.
     static let metal = Logger(subsystem: subsystem, category: "metal")
+    /// Presentation-level choices that survive a launch: interface language,
+    /// appearance. Separate from `client` because these change what the user
+    /// sees without the engine ever hearing about it.
+    static let app = Logger(subsystem: subsystem, category: "app")
 }

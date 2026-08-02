@@ -111,7 +111,7 @@ enum MediaStore {
             .trimmingCharacters(in: .whitespacesAndNewlines)
             .drop(while: { $0 == "." })
         let trimmed = String(cleaned.prefix(64))
-        return trimmed.isEmpty ? "FaceFusion" : trimmed
+        return trimmed.isEmpty ? "Morphiqo" : trimmed
     }
 
     // MARK: - Clearing up
@@ -283,15 +283,15 @@ enum MediaStore {
         var errorDescription: String? {
             switch self {
             case .notPermitted:
-                return "FaceFusion is not allowed to add to your photo library. You can turn that on in Settings, under FaceFusion."
+                return String(localized: "Morphiqo is not allowed to add to your photo library. You can turn that on in Settings, under Morphiqo.", bundle: .uiLanguage)
             case .missingFile:
-                return "That render is no longer available. Export it again."
+                return String(localized: "That render is no longer available. Export it again.", bundle: .uiLanguage)
             case .unsupportedFile(let isVideo):
                 return isVideo
-                    ? "Your photo library would not accept that video."
-                    : "Your photo library would not accept that image."
+                    ? String(localized: "Your photo library would not accept that video.", bundle: .uiLanguage)
+                    : String(localized: "Your photo library would not accept that image.", bundle: .uiLanguage)
             case .libraryFailed:
-                return "The photo library could not save the file. Check that there is enough free space and try again."
+                return String(localized: "The photo library could not save the file. Check that there is enough free space and try again.", bundle: .uiLanguage)
             }
         }
     }

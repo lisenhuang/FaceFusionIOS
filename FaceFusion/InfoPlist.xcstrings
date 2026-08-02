@@ -1,0 +1,150 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "CFBundleDisplayName": {
+      "comment": "The app's name on the Home Screen, in the App Switcher and in Settings. Resolved by the system before any app code runs, which is why zh-Hant is present and mirrors zh-Hans.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Morphiqo"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Morphiqo"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Morphiqo"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "拟颜"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "拟颜"
+          }
+        }
+      }
+    },
+    "CFBundleName": {
+      "comment": "The short bundle name. Kept in step with CFBundleDisplayName so no system surface can fall back to a different word.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Morphiqo"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Morphiqo"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Morphiqo"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "拟颜"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "拟颜"
+          }
+        }
+      }
+    },
+    "NSPhotoLibraryAddUsageDescription": {
+      "comment": "Shown in the system alert the first time the app writes to Photos.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Morphiqo saves your finished videos and photos to your library. Nothing is uploaded anywhere."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Morphiqo は完成した動画や写真を写真ライブラリに保存します。どこにもアップロードされません。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Morphiqo는 완성된 비디오와 사진을 사진 보관함에 저장합니다. 어디에도 업로드되지 않습니다."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "拟颜会将处理好的视频和照片存储到你的照片图库，不会上传到任何地方。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "拟颜会将处理好的视频和照片存储到你的照片图库，不会上传到任何地方。"
+          }
+        }
+      }
+    },
+    "NSPhotoLibraryUsageDescription": {
+      "comment": "Shown in the system alert the first time the app reads from Photos.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Morphiqo reads the photos and videos you choose so it can swap faces on this device. Nothing leaves your device."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Morphiqo は選択した写真や動画を読み込み、このデバイス上で顔を入れ替えます。データがデバイスの外に出ることはありません。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Morphiqo는 선택한 사진과 비디오를 읽어 이 기기에서 얼굴을 교체합니다. 어떤 데이터도 기기를 벗어나지 않습니다."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "拟颜会读取你选择的照片和视频，以便在本机完成换脸，所有内容都不会离开你的设备。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "拟颜会读取你选择的照片和视频，以便在本机完成换脸，所有内容都不会离开你的设备。"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

@@ -116,10 +116,13 @@ struct Banner: View {
 /// a sentence rather than shouting. Sized from `.caption`, so it grows with
 /// Dynamic Type like everything under it.
 struct SectionLabel: View {
-    var text: String
+    // `LocalizedStringKey`, not `String`. Taking a `String` would type every
+    // call site's literal before `Text` saw it, and quietly leave every heading
+    // in the app out of the string catalog.
+    var text: LocalizedStringKey
     var systemImage: String?
 
-    init(_ text: String, systemImage: String? = nil) {
+    init(_ text: LocalizedStringKey, systemImage: String? = nil) {
         self.text = text
         self.systemImage = systemImage
     }

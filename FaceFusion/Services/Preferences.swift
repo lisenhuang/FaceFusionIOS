@@ -34,9 +34,9 @@ enum AppTheme: String, CaseIterable, Identifiable {
 
     var label: String {
         switch self {
-        case .system: return "System"
-        case .light:  return "Light"
-        case .dark:   return "Dark"
+        case .system: return String(localized: "System", bundle: .uiLanguage)
+        case .light:  return String(localized: "Light", bundle: .uiLanguage)
+        case .dark:   return String(localized: "Dark", bundle: .uiLanguage)
         }
     }
 
@@ -71,6 +71,19 @@ final class Preferences {
 
     var theme: AppTheme {
         didSet { defaults.set(theme.rawValue, forKey: Key.theme) }
+    }
+
+    /// The interface language, or `.system` to follow the device.
+    ///
+    /// The `didSet` does more than persist: `String(localized:)` reads from
+    /// `Bundle.main` rather than from SwiftUI's environment, so the override has
+    /// to be re-pointed here for the next error message to come back in the
+    /// language the user just picked.
+    var language: AppLanguage {
+        didSet {
+            defaults.set(language.rawValue, forKey: Key.language)
+            LocalizationOverride.apply(language)
+        }
     }
 
     // MARK: - Engine
@@ -136,6 +149,7 @@ final class Preferences {
         // ships — and so every `object(forKey:)` below has something to find.
         defaults.register(defaults: [
             Key.theme: AppTheme.system.rawValue,
+            Key.language: AppLanguage.system.rawValue,
             Key.compute: ComputePolicy.automatic.rawValue,
             Key.enhanceFace: true,
             Key.identityStrength: 0.5,
@@ -149,6 +163,7 @@ final class Preferences {
         // A stored raw value can be from a build that spelled the case
         // differently, so both enums fall back rather than trusting the store.
         theme = AppTheme(rawValue: defaults.string(forKey: Key.theme) ?? "") ?? .system
+        language = AppLanguage(rawValue: defaults.string(forKey: Key.language) ?? "") ?? .system
         compute = ComputePolicy(rawValue: defaults.string(forKey: Key.compute) ?? "") ?? .automatic
         benchmarkSummary = defaults.string(forKey: Key.benchmarkSummary)
 
@@ -161,10 +176,17 @@ final class Preferences {
         savesToPhotos = defaults.bool(forKey: Key.savesToPhotos)
 
         hasCompletedOnboarding = defaults.bool(forKey: Key.hasCompletedOnboarding)
+
+        // `didSet` does not run during initialisation, so the stored choice has
+        // to be pushed into the bundle override by hand. Doing it here rather
+        // than at the first call site means the very first error message of the
+        // session is already in the right language.
+        LocalizationOverride.apply(language)
     }
 
     private enum Key {
         static let theme = "appearance.theme"
+        static let language = "appearance.language"
         static let compute = "engine.compute"
         static let benchmarkSummary = "engine.benchmarkSummary"
         static let enhanceFace = "swap.enhanceFace"

@@ -80,7 +80,8 @@ enum PixelSurface {
                                          kCVPixelFormatType_32BGRA,
                                          attributes as CFDictionary, &buffer)
         guard status == kCVReturnSuccess, let buffer else {
-            throw MediaError.pixelBuffer("Could not allocate a \(width)x\(height) frame buffer.")
+            throw MediaError.pixelBuffer(
+                String(localized: "Could not allocate a \(width)x\(height) frame buffer.", bundle: .uiLanguage))
         }
         return buffer
     }
@@ -157,7 +158,7 @@ enum PixelSurface {
         guard let destination = CGImageDestinationCreateWithURL(
                 url as CFURL, type.identifier as CFString, 1, nil) else {
             throw MediaError.writerFailed(
-                "\(url.pathExtension.uppercased()) images cannot be written.")
+                String(localized: "\(url.pathExtension.uppercased()) images cannot be written.", bundle: .uiLanguage))
         }
         CGImageDestinationAddImage(destination, image, [
             kCGImageDestinationLossyCompressionQuality: quality,
@@ -220,7 +221,7 @@ enum MediaError: LocalizedError {
              .writerFailed(let m), .unsupported(let m):
             return m
         case .noVideoTrack:
-            return "That file does not contain a video track."
+            return String(localized: "That file does not contain a video track.", bundle: .uiLanguage)
         }
     }
 }

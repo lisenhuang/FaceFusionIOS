@@ -59,6 +59,16 @@ struct FaceFusionApp: App {
 
     @State private var hasClearedStaleExports = false
 
+    /// Points `Bundle.main` at the stored interface language before the first
+    /// view exists.
+    ///
+    /// `Preferences` would do this the moment anything read it, but the first
+    /// reader is `RootView.body` — by which point a `String(localized:)` on a
+    /// launch path could already have answered in the system's language.
+    init() {
+        LocalizationOverride.apply(Preferences.shared.language)
+    }
+
     var body: some Scene {
         WindowGroup {
             RootView()

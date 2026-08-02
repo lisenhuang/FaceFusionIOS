@@ -38,21 +38,21 @@ enum ModelID: String, Codable, CaseIterable, Sendable, CodingKeyRepresentable {
 
     var displayName: String {
         switch self {
-        case .faceDetector:   return "Face Detector"
-        case .faceLandmarker: return "Landmark Refiner"
-        case .faceRecognizer: return "Identity Encoder"
-        case .faceSwapper:    return "Face Swapper"
-        case .faceEnhancer:   return "Face Enhancer"
+        case .faceDetector:   return String(localized: "Face Detector", bundle: .uiLanguage)
+        case .faceLandmarker: return String(localized: "Landmark Refiner", bundle: .uiLanguage)
+        case .faceRecognizer: return String(localized: "Identity Encoder", bundle: .uiLanguage)
+        case .faceSwapper:    return String(localized: "Face Swapper", bundle: .uiLanguage)
+        case .faceEnhancer:   return String(localized: "Face Enhancer", bundle: .uiLanguage)
         }
     }
 
     var purpose: String {
         switch self {
-        case .faceDetector:   return "Finds faces and their five key points in every frame."
-        case .faceLandmarker: return "Refines alignment with 68 landmarks for a steadier result."
-        case .faceRecognizer: return "Encodes the identity of your source face."
-        case .faceSwapper:    return "Performs the actual face replacement."
-        case .faceEnhancer:   return "Restores detail and sharpness in the swapped face."
+        case .faceDetector:   return String(localized: "Finds faces and their five key points in every frame.", bundle: .uiLanguage)
+        case .faceLandmarker: return String(localized: "Refines alignment with 68 landmarks for a steadier result.", bundle: .uiLanguage)
+        case .faceRecognizer: return String(localized: "Encodes the identity of your source face.", bundle: .uiLanguage)
+        case .faceSwapper:    return String(localized: "Performs the actual face replacement.", bundle: .uiLanguage)
+        case .faceEnhancer:   return String(localized: "Restores detail and sharpness in the swapped face.", bundle: .uiLanguage)
         }
     }
 }
@@ -83,10 +83,10 @@ enum ComputePolicy: String, Codable, Sendable, CaseIterable, Identifiable {
 
     var displayName: String {
         switch self {
-        case .automatic:    return "Automatic"
-        case .gpu:          return "GPU"
-        case .neuralEngine: return "Neural Engine"
-        case .cpu:          return "CPU only"
+        case .automatic:    return String(localized: "Automatic", bundle: .uiLanguage)
+        case .gpu:          return String(localized: "GPU", bundle: .uiLanguage)
+        case .neuralEngine: return String(localized: "Neural Engine", bundle: .uiLanguage)
+        case .cpu:          return String(localized: "CPU only", bundle: .uiLanguage)
         }
     }
 
@@ -99,13 +99,13 @@ enum ComputePolicy: String, Codable, Sendable, CaseIterable, Identifiable {
     var detail: String {
         switch self {
         case .automatic:
-            return "Lets the system spread the work across the Neural Engine, GPU and CPU. Fastest on most devices."
+            return String(localized: "Lets the system spread the work across the Neural Engine, GPU and CPU. Fastest on most devices.", bundle: .uiLanguage)
         case .gpu:
-            return "Keeps everything on the GPU and CPU. Worth trying if Automatic stutters."
+            return String(localized: "Keeps everything on the GPU and CPU. Worth trying if Automatic stutters.", bundle: .uiLanguage)
         case .neuralEngine:
-            return "Prefers the Neural Engine. Much slower for these models on some devices — measure before keeping it."
+            return String(localized: "Prefers the Neural Engine. Much slower for these models on some devices — measure before keeping it.", bundle: .uiLanguage)
         case .cpu:
-            return "Uses the CPU alone. Very slow, but it always works."
+            return String(localized: "Uses the CPU alone. Very slow, but it always works.", bundle: .uiLanguage)
         }
     }
 }
@@ -442,15 +442,15 @@ enum EngineError: Int, Codable, Sendable {
 
     var message: String {
         switch self {
-        case .modelMissing:    return "A required AI model is missing. Reinstall the models from Settings."
-        case .modelLoadFailed: return "A model could not be loaded. The file may be incomplete."
-        case .noSourceFace:    return "No face was found in the source image. Try a clearer, front-facing photo."
-        case .inferenceFailed: return "The engine failed while processing a frame."
-        case .invalidSurface:  return "An internal image buffer was invalid."
-        case .notPrepared:     return "The engine has not finished loading its models."
-        case .cancelled:       return "Cancelled."
+        case .modelMissing:    return String(localized: "A required AI model is missing. Reinstall the models from Settings.", bundle: .uiLanguage)
+        case .modelLoadFailed: return String(localized: "A model could not be loaded. The file may be incomplete.", bundle: .uiLanguage)
+        case .noSourceFace:    return String(localized: "No face was found in the source image. Try a clearer, front-facing photo.", bundle: .uiLanguage)
+        case .inferenceFailed: return String(localized: "The engine failed while processing a frame.", bundle: .uiLanguage)
+        case .invalidSurface:  return String(localized: "An internal image buffer was invalid.", bundle: .uiLanguage)
+        case .notPrepared:     return String(localized: "The engine has not finished loading its models.", bundle: .uiLanguage)
+        case .cancelled:       return String(localized: "Cancelled.", bundle: .uiLanguage)
         case .referenceFacesStale:
-            return "The chosen faces are no longer loaded. Scan the target again and reselect them."
+            return String(localized: "The chosen faces are no longer loaded. Scan the target again and reselect them.", bundle: .uiLanguage)
         }
     }
 }

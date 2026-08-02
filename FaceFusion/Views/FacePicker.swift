@@ -80,10 +80,14 @@ struct FacePicker: View {
     }
 
     private var scanCaption: String {
-        guard let progress = model.scanProgress else { return "Looking…" }
+        guard let progress = model.scanProgress else { return String(localized: "Looking…", bundle: .uiLanguage) }
         let found = progress.peopleFound
-        let people = found == 1 ? "1 person" : "\(found) people"
-        return "Frame \(progress.framesScanned) of \(progress.totalFrames) · \(people) so far"
+        // Two whole sentences rather than one with a noun phrase spliced in.
+        // Injecting "1 person" into a sentence assumes the translation puts the
+        // count where English does, which Japanese and Korean do not.
+        return found == 1
+            ? String(localized: "Frame \(progress.framesScanned) of \(progress.totalFrames) · 1 person so far", bundle: .uiLanguage)
+            : String(localized: "Frame \(progress.framesScanned) of \(progress.totalFrames) · \(found) people so far", bundle: .uiLanguage)
     }
 
     private var empty: some View {
@@ -163,8 +167,8 @@ struct FacePicker: View {
 
     private var selectionSummary: String {
         let checked = model.checkedPeople.count
-        guard checked > 0 else { return "No one selected — nothing will be replaced." }
-        return "Replacing \(checked) of \(model.people.count)."
+        guard checked > 0 else { return String(localized: "No one selected — nothing will be replaced.", bundle: .uiLanguage) }
+        return String(localized: "Replacing \(checked) of \(model.people.count).", bundle: .uiLanguage)
     }
 
     /// The Mac's `.link` button style, which does not exist here.
@@ -172,7 +176,7 @@ struct FacePicker: View {
     /// Plain tinted text with an invisible 44 pt target around it: a bordered
     /// pill for two words would compete with the primary actions above, but a
     /// bare word small enough not to compete is also small enough to miss.
-    private func quietButton(_ title: String, action: @escaping () -> Void) -> some View {
+    private func quietButton(_ title: LocalizedStringKey, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Text(title)
                 .font(.caption.weight(.medium))

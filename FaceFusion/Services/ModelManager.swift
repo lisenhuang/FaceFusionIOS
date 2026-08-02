@@ -157,7 +157,7 @@ final class ModelManager {
             let data = try Data(contentsOf: url)
             manifest = try JSONDecoder().decode(ModelManifest.self, from: data)
         } catch {
-            lastError = "The model manifest could not be read: \(error.localizedDescription)"
+            lastError = String(localized: "The model manifest could not be read: \(error.localizedDescription)", bundle: .uiLanguage)
         }
     }
 
@@ -361,7 +361,7 @@ enum ModelError: LocalizedError {
         case .transport(let message):
             return message
         case .checksum:
-            return "The downloaded file did not match its expected checksum and was discarded."
+            return String(localized: "The downloaded file did not match its expected checksum and was discarded.", bundle: .uiLanguage)
         }
     }
 }

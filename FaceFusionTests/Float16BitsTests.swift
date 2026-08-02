@@ -15,7 +15,7 @@
 
 import Testing
 import Foundation
-@testable import FaceFusion
+@testable import Morphiqo
 
 @Suite("Float16 widening")
 struct Float16BitsTests {

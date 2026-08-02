@@ -260,7 +260,7 @@ enum VideoPipeline {
         }
         videoOutput.alwaysCopiesSampleData = false
         guard reader.canAdd(videoOutput) else {
-            throw MediaError.readerFailed("Could not read this video's frames.")
+            throw MediaError.readerFailed(String(localized: "Could not read this video's frames.", bundle: .uiLanguage))
         }
         reader.add(videoOutput)
 
@@ -522,7 +522,7 @@ enum VideoPipeline {
             let reader = try AVAssetReader(asset: asset)
             let output = AVAssetReaderTrackOutput(track: track, outputSettings: nil)
             guard reader.canAdd(output) else {
-                throw MediaError.readerFailed("This video's audio track could not be read.")
+                throw MediaError.readerFailed(String(localized: "This video's audio track could not be read.", bundle: .uiLanguage))
             }
             reader.add(output)
 
@@ -534,7 +534,7 @@ enum VideoPipeline {
                 let codec = VideoPipeline.fourCCString(
                     CMFormatDescriptionGetMediaSubType(formatDescription))
                 throw MediaError.writerFailed(
-                    "This video's \(codec) audio cannot be stored in an MP4.")
+                    String(localized: "This video's \(codec) audio cannot be stored in an MP4.", bundle: .uiLanguage))
             }
             writer.add(input)
 

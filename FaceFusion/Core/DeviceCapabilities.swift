@@ -162,15 +162,15 @@ final class DeviceCapabilities {
     nonisolated static func recommendedProfile(enhancing: Bool) -> PerformanceProfile {
         let cores = performanceCoreCount
         var depth = max(2, min(4, cores / 2))
-        var notes = ["\(cores) cores"]
+        var notes = [String(localized: "\(cores) cores", bundle: .uiLanguage)]
 
         if enhancing {
             depth -= 1
-            notes.append("enhancing")
+            notes.append(String(localized: "enhancing", bundle: .uiLanguage))
         }
         if isMemoryConstrained {
             depth = min(depth, 2)
-            notes.append("limited memory")
+            notes.append(String(localized: "limited memory", bundle: .uiLanguage))
         }
 
         let thermal = thermalState
@@ -180,11 +180,15 @@ final class DeviceCapabilities {
         default:        break
         }
 
-        notes.append(thermalDescription(thermal))
+        notes.append(thermalLabel(thermal))
         return PerformanceProfile(concurrentFrames: max(1, depth),
                                   reason: notes.joined(separator: ", "))
     }
 
+    /// The English name, for the log. Never translated: a log line has to mean
+    /// the same thing whichever language the device happens to be set to, and
+    /// two devices' logs have to be comparable.
+    ///
     /// Lower case, because it is written into a sentence fragment as often as
     /// it is shown on its own — capitalise at the call site if a label needs it.
     nonisolated static func thermalDescription(_ state: ProcessInfo.ThermalState) -> String {
@@ -194,6 +198,17 @@ final class DeviceCapabilities {
         case .serious:  return "serious"
         case .critical: return "critical"
         default:        return "unknown"
+        }
+    }
+
+    /// The same thing in the user's language, for Settings.
+    nonisolated static func thermalLabel(_ state: ProcessInfo.ThermalState) -> String {
+        switch state {
+        case .nominal:  return String(localized: "nominal", bundle: .uiLanguage)
+        case .fair:     return String(localized: "fair", bundle: .uiLanguage)
+        case .serious:  return String(localized: "serious", bundle: .uiLanguage)
+        case .critical: return String(localized: "critical", bundle: .uiLanguage)
+        default:        return String(localized: "unknown", bundle: .uiLanguage)
         }
     }
 

@@ -12,7 +12,7 @@
 
 import Testing
 import Foundation
-@testable import FaceFusion
+@testable import Morphiqo
 
 // MARK: - Fixtures
 

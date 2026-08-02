@@ -1,8 +1,13 @@
-# FaceFusion for iPhone and iPad
+# Morphiqo for iPhone and iPad
 
 A local-first face-swapping app for iOS, for video and for photos. Download the
 models once; everything after that runs on the device, in aeroplane mode, and
 nothing you feed it ever leaves the phone.
+
+The app is **Morphiqo** in English, Korean and Japanese, and **拟颜** in Chinese.
+The Xcode project, its targets and the bundle identifier still read `FaceFusion`
+— those are structural names no user ever sees, and the bundle identifier in
+particular is the app's identity, so it is not something to change casually.
 
 ```
 SwiftUI app  ──▶  in-process engine  ──▶  ONNX Runtime  ──▶  Core ML  ──▶  ANE / GPU
@@ -98,7 +103,8 @@ may contract a multiply-add; it is not licence for a different algorithm.
 
 ## The pipeline
 
-Per frame, mirroring FaceFusion 3.8.0's `inswapper` path — unchanged from macOS:
+Per frame, mirroring the reference project's 3.8.0 `inswapper` path — unchanged
+from macOS:
 
 1. **Detect** — `yoloface_8n` on a 640×640 canvas → boxes + 5 key points.
 2. **Refine** — `2dfan4` → 68 landmarks, reduced back to 5.
@@ -155,9 +161,53 @@ landscapes, in light and dark.
 
 Theme is **System / Light / Dark**, defaulting to System.
 
+## Language
+
+English, Simplified Chinese, Korean and Japanese — 225 strings, all four
+languages, in `FaceFusion/Localizable.xcstrings`. The app name and the two photo
+library permission prompts live in `FaceFusion/InfoPlist.xcstrings`.
+
+The default needs no code: `en` is the development region, so iOS resolves the
+right `.lproj` by itself and anything the app does not speak falls back to
+English. `zh-Hant` is shipped as a **byte-for-byte copy of `zh-Hans`**, which is
+what makes a Traditional Chinese device show Simplified — including the app's
+name on the Home Screen, which SpringBoard resolves before any code runs.
+
+Overriding that from the picker in Settings takes two mechanisms, because two
+unrelated things resolve strings:
+
+| What resolves it | Mechanism |
+|---|---|
+| `Text("literal")` and every `LocalizedStringKey` | `.environment(\.locale,)` on `RootView` and `SettingsView` |
+| `String(localized:)` — status messages, `LocalizedError`, enum `displayName`s | explicit `bundle: .uiLanguage` at all 113 call sites |
+
+Swapping `Bundle.main`'s class with `object_setClass` is the usual trick for the
+second row and **does not work**: `String(localized:)` never calls
+`Bundle.localizedString(forKey:value:table:)`, so the subclass is not consulted.
+The symptom was that the onboarding screen's own text turned Japanese while every
+model name beside it stayed English. `Localization.swift` records this.
+
+Two traps worth knowing, both of which silently opt text out of the catalogue and
+both of which were found here by reading rather than by the compiler:
+
+- A view helper declared `func row(_ text: String)` types the literal at the call
+  site *before* `Text` sees it. `SectionLabel`, `MediaWell.title/hint`,
+  `privacyLine` and both `quietButton`s all had it. They take
+  `LocalizedStringKey` now.
+- `LabeledContent(_:value:)` takes a `StringProtocol`, not a
+  `LocalizedStringKey`, so its value must arrive already localised.
+
+Strings are extracted by the compiler, not by hand:
+
+```sh
+xcodebuild … build      # writes .stringsdata into DerivedData
+xcstringstool sync FaceFusion/Localizable.xcstrings \
+    --stringsdata <DerivedData>/…/Objects-normal/arm64/*.stringsdata
+```
+
 ## Models
 
-Fetched from the published FaceFusion asset release (`models-3.0.0`) and verified
+Fetched from the models' published asset release (`models-3.0.0`) and verified
 against the SHA-256 digests in `FaceFusion/Resources/models.json` before
 installation. A mismatch is discarded, not installed. The download runs on a
 background `URLSession` so ~900 MB survives the app being suspended.

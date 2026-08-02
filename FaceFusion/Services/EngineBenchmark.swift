@@ -74,44 +74,55 @@ final class EngineBenchmark {
     /// what turning the enhancer off is worth, which on the Mac was the largest
     /// single saving available.
     private struct Configuration {
+        /// Stable, English, and never shown. It is the row's identity and what
+        /// the log prints, so that switching language cannot reshuffle a run in
+        /// progress or make two devices' logs incomparable.
         var name: String
+        /// What Settings puts in the table.
+        var displayName: String
         var compute: ComputePolicy
         var tuning: EngineTuning
         var enhance: Bool
     }
 
-    /// Names are plain English because they are shown in Settings, not printed
-    /// to a terminal. Every tuning keeps `enhancerReplicas` at 1: replication
-    /// only pays when two frames are in the enhancer at once, which a
-    /// one-frame-at-a-time sweep never has, so a second replica here would cost
-    /// 340 MB and measure nothing.
+    /// Every tuning keeps `enhancerReplicas` at 1: replication only pays when
+    /// two frames are in the enhancer at once, which a one-frame-at-a-time
+    /// sweep never has, so a second replica here would cost 340 MB and measure
+    /// nothing.
     private static let sweep: [Configuration] = [
         Configuration(name: "Automatic",
+                      displayName: String(localized: "Automatic", bundle: .uiLanguage),
                       compute: .automatic,
                       tuning: EngineTuning(requireStaticInputShapes: true),
                       enhance: true),
         Configuration(name: "Automatic, flexible shapes",
+                      displayName: String(localized: "Automatic, flexible shapes", bundle: .uiLanguage),
                       compute: .automatic,
                       tuning: EngineTuning(requireStaticInputShapes: false),
                       enhance: true),
         Configuration(name: "GPU",
+                      displayName: String(localized: "GPU", bundle: .uiLanguage),
                       compute: .gpu,
                       tuning: EngineTuning(requireStaticInputShapes: true),
                       enhance: true),
         Configuration(name: "Neural Engine",
+                      displayName: String(localized: "Neural Engine", bundle: .uiLanguage),
                       compute: .neuralEngine,
                       tuning: EngineTuning(requireStaticInputShapes: true),
                       enhance: true),
         Configuration(name: "Older graph format",
+                      displayName: String(localized: "Older graph format", bundle: .uiLanguage),
                       compute: .automatic,
                       tuning: EngineTuning(requireStaticInputShapes: true,
                                            modelFormat: "NeuralNetwork"),
                       enhance: true),
         Configuration(name: "Automatic, without enhancement",
+                      displayName: String(localized: "Automatic, without enhancement", bundle: .uiLanguage),
                       compute: .automatic,
                       tuning: EngineTuning(requireStaticInputShapes: true),
                       enhance: false),
         Configuration(name: "CPU only",
+                      displayName: String(localized: "CPU only", bundle: .uiLanguage),
                       compute: .cpu,
                       tuning: EngineTuning(requireStaticInputShapes: true),
                       enhance: true),
@@ -143,30 +154,30 @@ final class EngineBenchmark {
 
         // Refusals, most fundamental first, each naming what to do about it.
         guard model.models.isReady else {
-            verdict = "Download the models first, then measure."
+            verdict = String(localized: "Download the models first, then measure.", bundle: .uiLanguage)
             return
         }
         guard case .ready = model.engine.state else {
-            verdict = "The engine is still starting. Try again in a moment."
+            verdict = String(localized: "The engine is still starting. Try again in a moment.", bundle: .uiLanguage)
             return
         }
         guard let frame = model.previewFrame, let source = model.sourceBuffer else {
-            verdict = "Choose a face and a photo or video first. The measurement runs on your own media, because the cost of a frame depends on what is in it."
+            verdict = String(localized: "Choose a face and a photo or video first. The measurement runs on your own media, because the cost of a frame depends on what is in it.", bundle: .uiLanguage)
             return
         }
         guard model.sourceFace != nil else {
-            verdict = "No face was found in the source image, so there is nothing to measure. Try a clearer, front-facing photo."
+            verdict = String(localized: "No face was found in the source image, so there is nothing to measure. Try a clearer, front-facing photo.", bundle: .uiLanguage)
             return
         }
         guard !model.previewFaces.isEmpty else {
-            verdict = "No face was found in the frame you are previewing. Move to a frame with a face in it and measure again."
+            verdict = String(localized: "No face was found in the frame you are previewing. Move to a frame with a face in it and measure again.", bundle: .uiLanguage)
             return
         }
 
         let width = CVPixelBufferGetWidth(frame)
         let height = CVPixelBufferGetHeight(frame)
         guard let output = try? PixelSurface.makeBuffer(width: width, height: height) else {
-            verdict = "There was not enough memory to run the measurement."
+            verdict = String(localized: "There was not enough memory to run the measurement.", bundle: .uiLanguage)
             return
         }
 
@@ -174,7 +185,7 @@ final class EngineBenchmark {
         isCancelled = false
         verdict = nil
         rows = Self.sweep.map {
-            Row(id: $0.name, name: $0.name, compute: $0.compute, tuning: $0.tuning)
+            Row(id: $0.name, name: $0.displayName, compute: $0.compute, tuning: $0.tuning)
         }
 
         let rounds = max(1, iterations)
@@ -257,17 +268,25 @@ final class EngineBenchmark {
 
         if let best = candidates.min(by: { ($0.stages?.total ?? .infinity) < ($1.stages?.total ?? .infinity) }),
            let bestTotal = best.stages?.total, bestTotal > 0 {
-            var sentence = "\(best.compute.displayName) — \(String(format: "%.1f", 1 / bestTotal)) fps"
+            // Whole sentences rather than clauses concatenated onto a stem. The
+            // English reads the same either way, but a translation cannot move
+            // "faster than CPU" to where its own grammar wants it if it arrives
+            // as a fragment already glued to a number.
+            let winner = best.compute.displayName
+            let fps = String(format: "%.1f", 1 / bestTotal)
 
             // Against the CPU baseline when it ran, because that is the number
             // that says how much Core ML is doing; against the field otherwise.
+            var sentence: String
             if let baseline = candidates.first(where: { $0.compute == .cpu })?.stages?.total,
                baseline > 0, best.compute != .cpu {
-                sentence += String(format: ", %.1f× faster than CPU", baseline / bestTotal)
+                let ratio = String(format: "%.1f", baseline / bestTotal)
+                sentence = String(localized: "\(winner) — \(fps) fps, \(ratio)× faster than CPU.", bundle: .uiLanguage)
             } else if candidates.count > 1 {
-                sentence += ", the fastest of the \(candidates.count) settings measured"
+                sentence = String(localized: "\(winner) — \(fps) fps, the fastest of the \(candidates.count) settings measured.", bundle: .uiLanguage)
+            } else {
+                sentence = String(localized: "\(winner) — \(fps) fps.", bundle: .uiLanguage)
             }
-            sentence += "."
 
             // A device that heated up during the run was measuring its own
             // throttling towards the end, so the ranking is worth repeating
@@ -275,10 +294,12 @@ final class EngineBenchmark {
             let endingThermalState = DeviceCapabilities.thermalState
             if endingThermalState.rawValue > startingThermalState.rawValue,
                endingThermalState == .serious || endingThermalState == .critical {
-                sentence += " Your device became warm while measuring, so these figures are pessimistic."
+                sentence += " " + String(localized: "Your device became warm while measuring, so these figures are pessimistic.", bundle: .uiLanguage)
             }
 
-            let summary = isCancelled ? sentence + " Measurement was stopped early." : sentence
+            let summary = isCancelled
+                ? sentence + " " + String(localized: "Measurement was stopped early.", bundle: .uiLanguage)
+                : sentence
             verdict = summary
             // Adopting the winner is the whole point of the exercise; the
             // summary is kept alongside it so Settings can still say where the
@@ -287,9 +308,9 @@ final class EngineBenchmark {
             Preferences.shared.benchmarkSummary = summary
             EngineLog.engine.notice("benchmark verdict: \(summary, privacy: .public)")
         } else if isCancelled {
-            verdict = "Measurement was stopped before anything could be compared."
+            verdict = String(localized: "Measurement was stopped before anything could be compared.", bundle: .uiLanguage)
         } else {
-            verdict = "Nothing could be measured on this device. The models may need reinstalling."
+            verdict = String(localized: "Nothing could be measured on this device. The models may need reinstalling.", bundle: .uiLanguage)
         }
 
         isRunning = false

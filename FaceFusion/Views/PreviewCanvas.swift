@@ -199,10 +199,12 @@ struct PreviewCanvas: View {
     }
 
     private var accessibilityDescription: String {
-        guard !model.previewFaces.isEmpty else { return "Preview. No faces found." }
+        guard !model.previewFaces.isEmpty else { return String(localized: "Preview. No faces found.", bundle: .uiLanguage) }
         let selected = model.selectedFaceIndices.count
         let found = model.previewFaces.count
-        return "Preview. \(found) \(found == 1 ? "face" : "faces") found, \(selected) will be replaced."
+        return found == 1
+            ? String(localized: "Preview. 1 face found, \(selected) will be replaced.", bundle: .uiLanguage)
+            : String(localized: "Preview. \(found) faces found, \(selected) will be replaced.", bundle: .uiLanguage)
     }
 
     // MARK: - Live gesture values

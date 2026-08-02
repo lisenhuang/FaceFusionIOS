@@ -49,6 +49,7 @@ struct SettingsView: View {
         NavigationStack {
             Form {
                 appearanceSection
+                languageSection
                 performanceSection
                 modelsSection
                 privacySection
@@ -84,6 +85,10 @@ struct SettingsView: View {
         // here as well as on `RootView` — otherwise choosing Dark repaints the
         // studio behind and leaves the picker that changed it in Light.
         .preferredColorScheme(preferences.theme.colorScheme)
+        // Same argument for the language: the picker that changes it lives on
+        // this sheet, so this is the one screen that must not need dismissing
+        // before the new language shows.
+        .environment(\.locale, preferences.language.locale)
     }
 
     // MARK: - Appearance
@@ -122,6 +127,24 @@ struct SettingsView: View {
                 // would leave three unlabelled circles.
                 Text(theme.label).tag(theme)
             }
+        }
+    }
+
+    // MARK: - Language
+
+    private var languageSection: some View {
+        Section {
+            // A menu rather than a segmented control: five options, three of
+            // them in scripts whose glyphs do not abbreviate.
+            Picker("Language", selection: $preferences.language) {
+                ForEach(AppLanguage.allCases) { language in
+                    Text(language.label).tag(language)
+                }
+            }
+        } header: {
+            Text("Language")
+        } footer: {
+            Text("Follows your device unless you choose otherwise. A device set to Traditional Chinese is shown Simplified Chinese; a language Morphiqo does not speak is shown English.")
         }
     }
 
@@ -217,8 +240,10 @@ struct SettingsView: View {
     }
 
     private var measureHint: String {
-        guard manager.isReady else { return "The models have to be installed before anything can be timed." }
-        return "Load a face and a video or photo first. The measurement runs on the frame you are working on, so the numbers describe your own material rather than a synthetic one."
+        guard manager.isReady else {
+            return String(localized: "The models have to be installed before anything can be timed.", bundle: .uiLanguage)
+        }
+        return String(localized: "Load a face and a video or photo first. The measurement runs on the frame you are working on, so the numbers describe your own material rather than a synthetic one.", bundle: .uiLanguage)
     }
 
     /// The row of a completed sweep.
@@ -297,7 +322,7 @@ struct SettingsView: View {
         return bestID
     }
 
-    private func stageColumn(_ name: String, _ seconds: Double) -> some View {
+    private func stageColumn(_ name: LocalizedStringKey, _ seconds: Double) -> some View {
         VStack(alignment: .trailing, spacing: 1) {
             Text(String(format: "%.0f", seconds * 1000))
                 .font(.caption.monospacedDigit())
@@ -343,11 +368,15 @@ struct SettingsView: View {
     private var deviceRows: some View {
         let capabilities = DeviceCapabilities.shared
         let profile = capabilities.profile(enhancing: model.enhanceFace)
-        let thermal = DeviceCapabilities.thermalDescription(capabilities.thermalState)
+        let thermal = DeviceCapabilities.thermalLabel(capabilities.thermalState)
 
         return Group {
+            // `LabeledContent`'s `value:` overload takes a `StringProtocol`, not
+            // a `LocalizedStringKey`, so the word "cores" has to be localised
+            // before it arrives rather than by the view.
             LabeledContent("This device",
-                           value: "\(DeviceCapabilities.deviceModelIdentifier) · \(DeviceCapabilities.performanceCoreCount) cores")
+                           value: "\(DeviceCapabilities.deviceModelIdentifier) · "
+                                + String(localized: "\(DeviceCapabilities.performanceCoreCount) cores", bundle: .uiLanguage))
             LabeledContent("Thermal state", value: thermal.capitalized)
             VStack(alignment: .leading, spacing: 3) {
                 LabeledContent("Frames at once", value: "\(profile.concurrentFrames)")
@@ -436,13 +465,13 @@ struct SettingsView: View {
         case .installed:
             return formatBytes(descriptor.bytes)
         case .missing:
-            return "\(formatBytes(descriptor.bytes)) · not installed"
+            return String(localized: "\(formatBytes(descriptor.bytes)) · not installed", bundle: .uiLanguage)
         case .downloading(let received, let total):
             return "\(Int(Double(received) / Double(max(total, 1)) * 100))%"
         case .verifying:
-            return "Verifying…"
+            return String(localized: "Verifying…", bundle: .uiLanguage)
         case .failed:
-            return "Failed"
+            return String(localized: "Failed", bundle: .uiLanguage)
         }
     }
 
@@ -461,7 +490,11 @@ struct SettingsView: View {
         }
     }
 
-    private func privacyLine(_ symbol: String, _ text: String) -> some View {
+    // `LocalizedStringKey` rather than `String`: taking a `String` here would
+    // silently opt these three sentences out of the string catalog, because the
+    // literal at the call site would be typed as a plain `String` before `Text`
+    // ever saw it.
+    private func privacyLine(_ symbol: String, _ text: LocalizedStringKey) -> some View {
         Label {
             Text(text)
                 .font(.callout)
@@ -496,7 +529,7 @@ struct SettingsView: View {
         } header: {
             Text("About")
         } footer: {
-            Text("The models come from the published FaceFusion release. Each keeps its own licence, listed above.")
+            Text("The models come from their original public release. Each keeps its own licence, listed above.")
         }
     }
 
@@ -511,7 +544,7 @@ struct SettingsView: View {
 
     /// A text button with an invisible 44 pt target, for the secondary actions
     /// that would look overbearing as pills.
-    private func quietButton(_ title: String, action: @escaping () -> Void) -> some View {
+    private func quietButton(_ title: LocalizedStringKey, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             // The frame belongs inside the label: wrapped around the `Button`
             // it would centre the button in a larger box rather than enlarge

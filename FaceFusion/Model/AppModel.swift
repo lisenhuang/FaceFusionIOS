@@ -447,7 +447,7 @@ final class AppModel {
     /// the app.
     func handleMemoryWarning() {
         engine.handleMemoryPressure()
-        statusMessage = "Memory was running low, so detail enhancement has been switched off. It returns the next time the engine starts."
+        statusMessage = String(localized: "Memory was running low, so detail enhancement has been switched off. It returns the next time the engine starts.", bundle: .uiLanguage)
     }
 
     // MARK: - Choosing media
@@ -628,7 +628,7 @@ final class AppModel {
                 await useSource(url)
             }
         } else {
-            statusMessage = "That file type is not supported."
+            statusMessage = String(localized: "That file type is not supported.", bundle: .uiLanguage)
         }
     }
 
@@ -698,7 +698,7 @@ final class AppModel {
     private func stageImport(_ item: PhotosPickerItem) async -> URL? {
         do {
             guard let imported = try await item.loadTransferable(type: ImportedFile.self) else {
-                statusMessage = "That item could not be read from your photo library."
+                statusMessage = String(localized: "That item could not be read from your photo library.", bundle: .uiLanguage)
                 return nil
             }
             return imported.url
@@ -903,7 +903,7 @@ final class AppModel {
     /// Finds the distinct people in the target so they can be checked off.
     func scanTargetForPeople() {
         guard case .ready = engine.state else {
-            statusMessage = "The engine is still starting."
+            statusMessage = String(localized: "The engine is still starting.", bundle: .uiLanguage)
             return
         }
         guard let target else { return }
@@ -1110,7 +1110,7 @@ final class AppModel {
                 }
             } catch is CancellationError {
                 self.phase = .ready
-                self.statusMessage = "Export cancelled."
+                self.statusMessage = String(localized: "Export cancelled.", bundle: .uiLanguage)
                 try? FileManager.default.removeItem(at: destination)
             } catch {
                 self.phase = .failed(error.localizedDescription)
@@ -1126,7 +1126,7 @@ final class AppModel {
     /// they stand now and is written at the image's own resolution.
     func exportStillImage(to destination: URL) async throws {
         guard let frame = previewFrame else {
-            throw MediaError.decode("The photo is no longer loaded.")
+            throw MediaError.decode(String(localized: "The photo is no longer loaded.", bundle: .uiLanguage))
         }
         let width = CVPixelBufferGetWidth(frame)
         let height = CVPixelBufferGetHeight(frame)
@@ -1152,7 +1152,7 @@ final class AppModel {
         guard case .finished(let url) = phase else { return }
         guard !isSavingToPhotos else { return }
         guard !finishedIsInPhotos else {
-            statusMessage = "That render is already in your photo library."
+            statusMessage = String(localized: "That render is already in your photo library.", bundle: .uiLanguage)
             return
         }
 
@@ -1160,7 +1160,7 @@ final class AppModel {
         defer { isSavingToPhotos = false }
 
         guard await MediaStore.requestAddPermission() else {
-            statusMessage = "FaceFusion needs permission to add to your photo library. You can grant it in Settings, or save to Files instead."
+            statusMessage = String(localized: "Morphiqo needs permission to add to your photo library. You can grant it in Settings, or save to Files instead.", bundle: .uiLanguage)
             return
         }
         do {
@@ -1170,7 +1170,7 @@ final class AppModel {
                 try await MediaStore.saveVideoToPhotos(url)
             }
             finishedIsInPhotos = true
-            statusMessage = "Saved to your photo library."
+            statusMessage = String(localized: "Saved to your photo library.", bundle: .uiLanguage)
         } catch {
             statusMessage = error.localizedDescription
         }

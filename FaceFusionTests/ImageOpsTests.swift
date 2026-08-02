@@ -22,7 +22,7 @@ import Testing
 import CoreGraphics
 import Foundation
 import os
-@testable import FaceFusion
+@testable import Morphiqo
 
 // MARK: - Fixtures
 

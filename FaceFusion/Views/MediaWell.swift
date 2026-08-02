@@ -32,9 +32,13 @@ import PhotosUI
 import UniformTypeIdentifiers
 
 struct MediaWell<Thumbnail: View>: View {
-    var title: String
+    // `title` and `hint` are literals written at the call site, so they are
+    // `LocalizedStringKey` and get extracted. `caption` is built at runtime
+    // from a file's dimensions and codec, so it stays a `String` — it has
+    // already been localised by whoever produced it.
+    var title: LocalizedStringKey
     var systemImage: String
-    var hint: String
+    var hint: LocalizedStringKey
     var isFilled: Bool
     var caption: String?
     /// What Files is allowed to offer. The Photos filter is derived from the
@@ -156,7 +160,10 @@ struct MediaWell<Thumbnail: View>: View {
         .menuStyle(.button)
         .buttonStyle(.plain)
         .accessibilityLabel(title)
-        .accessibilityValue(caption ?? (isFilled ? "Chosen" : "Empty"))
+        // `caption` is a `String?`, which types the whole expression as `String`
+        // and so picks the non-localising overload — the two literals have to
+        // localise themselves rather than relying on `LocalizedStringKey`.
+        .accessibilityValue(caption ?? (isFilled ? String(localized: "Chosen", bundle: .uiLanguage) : String(localized: "Empty", bundle: .uiLanguage)))
         .accessibilityHint(isFilled ? "Change or remove this." : "Choose from Photos or Files.")
         .dropDestination(for: URL.self) { urls, _ in
             guard let url = urls.first else { return false }

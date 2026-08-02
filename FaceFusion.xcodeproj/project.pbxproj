@@ -198,6 +198,10 @@
 			knownRegions = (
 				en,
 				Base,
+				"zh-Hans",
+				"zh-Hant",
+				ko,
+				ja,
 			);
 			mainGroup = 0FB45C95301DE4C300EFE626;
 			minimizedProjectReferenceProxies = 1;
@@ -408,10 +412,10 @@
 				DEVELOPMENT_TEAM = HPL74FCW8E;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = FaceFusion;
+				INFOPLIST_KEY_CFBundleDisplayName = Morphiqo;
 				INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace = YES;
-				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "FaceFusion saves your finished videos and photos to your library. Nothing is uploaded anywhere.";
-				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "FaceFusion reads the photos and videos you choose so it can swap faces on this device. Nothing leaves your device.";
+				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "Morphiqo saves your finished videos and photos to your library. Nothing is uploaded anywhere.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Morphiqo reads the photos and videos you choose so it can swap faces on this device. Nothing leaves your device.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -423,7 +427,7 @@
 				);
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.lisenhuang.FaceFusion;
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_NAME = Morphiqo;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = NO;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = nonisolated;
@@ -445,10 +449,10 @@
 				DEVELOPMENT_TEAM = HPL74FCW8E;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = FaceFusion;
+				INFOPLIST_KEY_CFBundleDisplayName = Morphiqo;
 				INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace = YES;
-				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "FaceFusion saves your finished videos and photos to your library. Nothing is uploaded anywhere.";
-				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "FaceFusion reads the photos and videos you choose so it can swap faces on this device. Nothing leaves your device.";
+				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "Morphiqo saves your finished videos and photos to your library. Nothing is uploaded anywhere.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Morphiqo reads the photos and videos you choose so it can swap faces on this device. Nothing leaves your device.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -460,7 +464,7 @@
 				);
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.lisenhuang.FaceFusion;
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_NAME = Morphiqo;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = NO;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = nonisolated;
@@ -488,7 +492,7 @@
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/FaceFusion.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/FaceFusion";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Morphiqo.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Morphiqo";
 			};
 			name = Debug;
 		};
@@ -509,7 +513,7 @@
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/FaceFusion.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/FaceFusion";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Morphiqo.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Morphiqo";
 			};
 			name = Release;
 		};

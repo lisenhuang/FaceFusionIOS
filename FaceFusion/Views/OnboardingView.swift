@@ -74,7 +74,7 @@ struct OnboardingView: View {
             .padding(.bottom, 4)
             .accessibilityHidden(true)
 
-            Text("Set up FaceFusion")
+            Text("Set up Morphiqo")
                 .font(.title.weight(.semibold))
                 .multilineTextAlignment(.center)
                 .accessibilityAddTraits(.isHeader)
@@ -195,7 +195,7 @@ struct OnboardingView: View {
     private var disclosure: some View {
         VStack(alignment: .leading, spacing: 12) {
             Label {
-                Text("Downloaded from the FaceFusion model repository and verified against a checksum before use.")
+                Text("Downloaded from the models' official release and verified against a checksum before use.")
             } icon: {
                 Image(systemName: "checkmark.shield")
             }

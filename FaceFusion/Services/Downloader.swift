@@ -303,7 +303,8 @@ extension Downloader: URLSessionDownloadDelegate {
         // 404 becomes a checksum failure two steps later.
         if let response = downloadTask.response as? HTTPURLResponse,
            !(200...299).contains(response.statusCode) {
-            finish(key: key, with: .failure(ModelError.transport("Server returned HTTP \(response.statusCode).")))
+            finish(key: key, with: .failure(ModelError.transport(
+                String(localized: "Server returned HTTP \(response.statusCode).", bundle: .uiLanguage))))
             return
         }
 

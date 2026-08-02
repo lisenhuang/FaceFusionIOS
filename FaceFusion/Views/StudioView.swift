@@ -60,7 +60,7 @@ struct StudioView: View {
     var body: some View {
         NavigationStack {
             workspace
-                .navigationTitle("FaceFusion")
+                .navigationTitle("Morphiqo")
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItem(placement: .topBarTrailing) {
@@ -285,12 +285,12 @@ struct StudioView: View {
         guard model.sourceBuffer != nil else { return nil }
         if model.sourceFace == nil {
             return model.sourceFaceCount == 0
-                ? "No face found — try a clearer, front-facing photo."
-                : "Encoding…"
+                ? String(localized: "No face found — try a clearer, front-facing photo.", bundle: .uiLanguage)
+                : String(localized: "Encoding…", bundle: .uiLanguage)
         }
         return model.sourceFaceCount > 1
-            ? "Using the largest of \(model.sourceFaceCount) faces."
-            : "Face ready."
+            ? String(localized: "Using the largest of \(model.sourceFaceCount) faces.", bundle: .uiLanguage)
+            : String(localized: "Face ready.", bundle: .uiLanguage)
     }
 
     private var targetCaption: String? {
@@ -302,7 +302,10 @@ struct StudioView: View {
                 .formatted(.time(pattern: .minuteSecond))
             return "\(size) · \(duration) · \(info.codecDescription)"
         case .image(_, let format):
-            return "\(size) · \(format.isEmpty ? "Photo" : format)"
+            // `format` is a file-extension token (HEIC, PNG) and stays as it is;
+            // only the fallback word is language.
+            let kind = format.isEmpty ? String(localized: "Photo", bundle: .uiLanguage) : format
+            return "\(size) · \(kind)"
         }
     }
 
@@ -363,13 +366,13 @@ struct StudioView: View {
     private var faceModeHint: String {
         switch model.faceMode {
         case .everyFace:
-            return "Replaces every face in the frame."
+            return String(localized: "Replaces every face in the frame.", bundle: .uiLanguage)
         case .oneFace:
-            return "Replaces one face. Tap a different face in the preview to switch."
+            return String(localized: "Replaces one face. Tap a different face in the preview to switch.", bundle: .uiLanguage)
         case .chosen:
             return model.targetIsImage
-                ? "Replaces only the faces you tick."
-                : "Replaces only the people you tick, wherever they appear in the video."
+                ? String(localized: "Replaces only the faces you tick.", bundle: .uiLanguage)
+                : String(localized: "Replaces only the people you tick, wherever they appear in the video.", bundle: .uiLanguage)
         }
     }
 
@@ -622,16 +625,16 @@ struct StudioView: View {
 
     private var readinessHint: String {
         if model.sourceFace == nil && model.targetURL == nil {
-            return "Add a face and a video or photo to begin."
+            return String(localized: "Add a face and a video or photo to begin.", bundle: .uiLanguage)
         }
-        if model.sourceFace == nil { return "Add a source face." }
-        if model.targetURL == nil { return "Add a target video or photo." }
+        if model.sourceFace == nil { return String(localized: "Add a source face.", bundle: .uiLanguage) }
+        if model.targetURL == nil { return String(localized: "Add a target video or photo.", bundle: .uiLanguage) }
         if model.faceMode == .chosen && model.checkedPeople.isEmpty {
             return model.people.isEmpty
-                ? "Find the faces in the target, then tick the ones to replace."
-                : "Tick at least one face to replace."
+                ? String(localized: "Find the faces in the target, then tick the ones to replace.", bundle: .uiLanguage)
+                : String(localized: "Tick at least one face to replace.", bundle: .uiLanguage)
         }
-        return "Ready to export."
+        return String(localized: "Ready to export.", bundle: .uiLanguage)
     }
 
     private var exportButton: some View {

@@ -55,6 +55,11 @@ struct RootView: View {
             SettingsView()
         }
         .preferredColorScheme(preferences.theme.colorScheme)
+        // The other half of the language override. SwiftUI resolves every
+        // `Text("literal")` against this, and reads it here in `body`, so
+        // changing the picker in Settings retranslates the interface in place
+        // rather than at the next launch.
+        .environment(\.locale, preferences.language.locale)
         // Jetsam gives no second warning. Handing this straight to the model —
         // which drops the optional models and their Core ML graphs — costs the
         // user quality on the next frame instead of costing them the render.
