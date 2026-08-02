@@ -111,7 +111,11 @@ enum MediaStore {
             .trimmingCharacters(in: .whitespacesAndNewlines)
             .drop(while: { $0 == "." })
         let trimmed = String(cleaned.prefix(64))
-        return trimmed.isEmpty ? "Morphiqo" : trimmed
+        // Never the app's name. An exported file travels to people who did not
+        // make it, and its name should say nothing about what produced it — a
+        // picked file whose stem sanitises down to nothing is the one path that
+        // would otherwise put the product name on someone else's device.
+        return trimmed.isEmpty ? "export" : trimmed
     }
 
     // MARK: - Clearing up
