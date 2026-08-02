@@ -233,7 +233,7 @@ Photos or Files. Nothing is uploaded, and the app works with the network off.
 ## Building
 
 ```sh
-xcodebuild -project FaceFusion.xcodeproj -scheme FaceFusion \
+xcodebuild -project FaceFusion.xcodeproj -scheme Morphiqo \
            -configuration Release \
            -destination 'generic/platform=iOS' build
 ```
@@ -260,7 +260,7 @@ with *Enhance detail* off.
 
 ```sh
 # Unit tests — no models needed.
-xcodebuild -project FaceFusion.xcodeproj -scheme FaceFusion \
+xcodebuild -project FaceFusion.xcodeproj -scheme Morphiqo \
            -destination 'platform=iOS Simulator,name=iPhone 17 Pro' \
            -only-testing:FaceFusionTests test
 ```

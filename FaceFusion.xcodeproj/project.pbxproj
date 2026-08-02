@@ -16,19 +16,19 @@
 			containerPortal = 0FB45C96301DE4C300EFE626 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = 0FB45C9D301DE4C300EFE626;
-			remoteInfo = FaceFusion;
+			remoteInfo = Morphiqo;
 		};
 		0FB45CB6301DE4C400EFE626 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 0FB45C96301DE4C300EFE626 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = 0FB45C9D301DE4C300EFE626;
-			remoteInfo = FaceFusion;
+			remoteInfo = Morphiqo;
 		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		0FB45C9E301DE4C300EFE626 /* FaceFusion.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FaceFusion.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		0FB45C9E301DE4C300EFE626 /* Morphiqo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Morphiqo.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		0FB45CAB301DE4C400EFE626 /* FaceFusionTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FaceFusionTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		0FB45CB5301DE4C400EFE626 /* FaceFusionUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FaceFusionUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -90,7 +90,7 @@
 		0FB45C9F301DE4C300EFE626 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				0FB45C9E301DE4C300EFE626 /* FaceFusion.app */,
+				0FB45C9E301DE4C300EFE626 /* Morphiqo.app */,
 				0FB45CAB301DE4C400EFE626 /* FaceFusionTests.xctest */,
 				0FB45CB5301DE4C400EFE626 /* FaceFusionUITests.xctest */,
 			);
@@ -100,9 +100,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		0FB45C9D301DE4C300EFE626 /* FaceFusion */ = {
+		0FB45C9D301DE4C300EFE626 /* Morphiqo */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 0FB45CBF301DE4C400EFE626 /* Build configuration list for PBXNativeTarget "FaceFusion" */;
+			buildConfigurationList = 0FB45CBF301DE4C400EFE626 /* Build configuration list for PBXNativeTarget "Morphiqo" */;
 			buildPhases = (
 				0FB45C9A301DE4C300EFE626 /* Sources */,
 				0FB45C9B301DE4C300EFE626 /* Frameworks */,
@@ -115,12 +115,12 @@
 			fileSystemSynchronizedGroups = (
 				0FB45CA0301DE4C300EFE626 /* FaceFusion */,
 			);
-			name = FaceFusion;
+			name = Morphiqo;
 			packageProductDependencies = (
 				AA00000000000000000031 /* onnxruntime */,
 			);
-			productName = FaceFusion;
-			productReference = 0FB45C9E301DE4C300EFE626 /* FaceFusion.app */;
+			productName = Morphiqo;
+			productReference = 0FB45C9E301DE4C300EFE626 /* Morphiqo.app */;
 			productType = "com.apple.product-type.application";
 		};
 		0FB45CAA301DE4C400EFE626 /* FaceFusionTests */ = {
@@ -213,7 +213,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				0FB45C9D301DE4C300EFE626 /* FaceFusion */,
+				0FB45C9D301DE4C300EFE626 /* Morphiqo */,
 				0FB45CAA301DE4C400EFE626 /* FaceFusionTests */,
 				0FB45CB4301DE4C400EFE626 /* FaceFusionUITests */,
 			);
@@ -271,12 +271,12 @@
 /* Begin PBXTargetDependency section */
 		0FB45CAD301DE4C400EFE626 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 0FB45C9D301DE4C300EFE626 /* FaceFusion */;
+			target = 0FB45C9D301DE4C300EFE626 /* Morphiqo */;
 			targetProxy = 0FB45CAC301DE4C400EFE626 /* PBXContainerItemProxy */;
 		};
 		0FB45CB7301DE4C400EFE626 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 0FB45C9D301DE4C300EFE626 /* FaceFusion */;
+			target = 0FB45C9D301DE4C300EFE626 /* Morphiqo */;
 			targetProxy = 0FB45CB6301DE4C400EFE626 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
@@ -408,7 +408,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = FaceFusion/FaceFusion.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 5;
 				DEVELOPMENT_TEAM = HPL74FCW8E;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -425,7 +425,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.3;
+				MARKETING_VERSION = 1.0.4;
 				PRODUCT_BUNDLE_IDENTIFIER = com.lisenhuang.morphiqo;
 				PRODUCT_NAME = Morphiqo;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -445,7 +445,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = FaceFusion/FaceFusion.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 5;
 				DEVELOPMENT_TEAM = HPL74FCW8E;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -462,7 +462,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.3;
+				MARKETING_VERSION = 1.0.4;
 				PRODUCT_BUNDLE_IDENTIFIER = com.lisenhuang.morphiqo;
 				PRODUCT_NAME = Morphiqo;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -480,10 +480,10 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 5;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				MARKETING_VERSION = 1.0.3;
+				MARKETING_VERSION = 1.0.4;
 				PRODUCT_BUNDLE_IDENTIFIER = com.lisenhuang.morphiqoTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
@@ -501,10 +501,10 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 5;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				MARKETING_VERSION = 1.0.3;
+				MARKETING_VERSION = 1.0.4;
 				PRODUCT_BUNDLE_IDENTIFIER = com.lisenhuang.morphiqoTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
@@ -521,9 +521,9 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 5;
 				GENERATE_INFOPLIST_FILE = YES;
-				MARKETING_VERSION = 1.0.3;
+				MARKETING_VERSION = 1.0.4;
 				PRODUCT_BUNDLE_IDENTIFIER = com.lisenhuang.morphiqoUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
@@ -532,7 +532,7 @@
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_TARGET_NAME = FaceFusion;
+				TEST_TARGET_NAME = Morphiqo;
 			};
 			name = Debug;
 		};
@@ -540,9 +540,9 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 5;
 				GENERATE_INFOPLIST_FILE = YES;
-				MARKETING_VERSION = 1.0.3;
+				MARKETING_VERSION = 1.0.4;
 				PRODUCT_BUNDLE_IDENTIFIER = com.lisenhuang.morphiqoUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
@@ -551,7 +551,7 @@
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_TARGET_NAME = FaceFusion;
+				TEST_TARGET_NAME = Morphiqo;
 			};
 			name = Release;
 		};
@@ -567,7 +567,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		0FB45CBF301DE4C400EFE626 /* Build configuration list for PBXNativeTarget "FaceFusion" */ = {
+		0FB45CBF301DE4C400EFE626 /* Build configuration list for PBXNativeTarget "Morphiqo" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				0FB45CC0301DE4C400EFE626 /* Debug */,
