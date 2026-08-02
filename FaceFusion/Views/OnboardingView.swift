@@ -195,7 +195,7 @@ struct OnboardingView: View {
     private var disclosure: some View {
         VStack(alignment: .leading, spacing: 12) {
             Label {
-                Text("Downloaded from the models' official release and verified against a checksum before use.")
+                Text("Every file is verified against a checksum before use, and anything that does not match is discarded.")
             } icon: {
                 Image(systemName: "checkmark.shield")
             }
