@@ -107,6 +107,7 @@
 				0FB45C9A301DE4C300EFE626 /* Sources */,
 				0FB45C9B301DE4C300EFE626 /* Frameworks */,
 				0FB45C9C301DE4C300EFE626 /* Resources */,
+				AA00000000000000000040 /* Patch onnxruntime MinimumOSVersion */,
 			);
 			buildRules = (
 			);
@@ -243,6 +244,28 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		AA00000000000000000040 /* Patch onnxruntime MinimumOSVersion */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Patch onnxruntime MinimumOSVersion";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# The onnxruntime.framework from the ONNX Runtime SPM package declares\n# MinimumOSVersion 15.1 in its Info.plist while its binary is linked for 17.0.\n# App Store validation rejects that contradiction with ITMS-90208, so bring the\n# plist in line with the deployment target. Editing an Info.plist invalidates\n# the framework's signature, so it has to be signed again afterwards.\nset -e\nFW=\"$CODESIGNING_FOLDER_PATH/Frameworks/onnxruntime.framework\"\n[ -d \"$FW\" ] || exit 0\nCURRENT=$(/usr/libexec/PlistBuddy -c \"Print :MinimumOSVersion\" \"$FW/Info.plist\" 2>/dev/null || echo \"\")\n[ \"$CURRENT\" = \"$IPHONEOS_DEPLOYMENT_TARGET\" ] && exit 0\n/usr/libexec/PlistBuddy -c \"Set :MinimumOSVersion $IPHONEOS_DEPLOYMENT_TARGET\" \"$FW/Info.plist\"\necho \"note: onnxruntime.framework MinimumOSVersion $CURRENT -> $IPHONEOS_DEPLOYMENT_TARGET\"\nif [ \"$CODE_SIGNING_ALLOWED\" = \"YES\" ] && [ -n \"${EXPANDED_CODE_SIGN_IDENTITY:-}\" ]; then\n  codesign --force --sign \"$EXPANDED_CODE_SIGN_IDENTITY\" --preserve-metadata=identifier,entitlements,flags \"$FW\"\nfi\n";
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		0FB45C9A301DE4C300EFE626 /* Sources */ = {
@@ -408,9 +431,10 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = FaceFusion/FaceFusion.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 5;
+				CURRENT_PROJECT_VERSION = 6;
 				DEVELOPMENT_TEAM = HPL74FCW8E;
 				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = Morphiqo;
 				INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace = YES;
@@ -445,9 +469,10 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = FaceFusion/FaceFusion.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 5;
+				CURRENT_PROJECT_VERSION = 6;
 				DEVELOPMENT_TEAM = HPL74FCW8E;
 				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = Morphiqo;
 				INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace = YES;
@@ -480,7 +505,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 5;
+				CURRENT_PROJECT_VERSION = 6;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				MARKETING_VERSION = 1.0.4;
@@ -501,7 +526,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 5;
+				CURRENT_PROJECT_VERSION = 6;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				MARKETING_VERSION = 1.0.4;
@@ -521,7 +546,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 5;
+				CURRENT_PROJECT_VERSION = 6;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0.4;
 				PRODUCT_BUNDLE_IDENTIFIER = com.lisenhuang.morphiqoUITests;
@@ -540,7 +565,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 5;
+				CURRENT_PROJECT_VERSION = 6;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0.4;
 				PRODUCT_BUNDLE_IDENTIFIER = com.lisenhuang.morphiqoUITests;
