@@ -204,11 +204,6 @@ struct OnboardingView: View {
             } icon: {
                 Image(systemName: "lock.shield")
             }
-            Label {
-                Text("The face‑swapping models are published for non‑commercial research use. Only swap faces of people who have agreed to it.")
-            } icon: {
-                Image(systemName: "person.badge.shield.exclamationmark")
-            }
         }
         .font(.caption)
         .foregroundStyle(.secondary)

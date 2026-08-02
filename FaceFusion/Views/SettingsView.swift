@@ -482,15 +482,13 @@ struct SettingsView: View {
                         "Every face is detected, encoded and swapped on this device. No photo, video or frame is ever uploaded.")
             privacyLine("wifi.slash",
                         "The one‑time model download is the only thing the app uses the network for. After it, everything works with no connection at all.")
-            privacyLine("person.badge.shield.exclamationmark",
-                        "The face‑swapping models are published for non‑commercial research use. Only swap faces of people who have agreed to it.")
         } header: {
             Text("Privacy")
         }
     }
 
     // `LocalizedStringKey` rather than `String`: taking a `String` here would
-    // silently opt these three sentences out of the string catalog, because the
+    // silently opt these two sentences out of the string catalog, because the
     // literal at the call site would be typed as a plain `String` before `Text`
     // ever saw it.
     private func privacyLine(_ symbol: String, _ text: LocalizedStringKey) -> some View {
