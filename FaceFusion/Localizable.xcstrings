@@ -408,6 +408,9 @@
         }
       }
     },
+    "A new version is available" : {
+
+    },
     "A required AI model is missing. Reinstall the models from Settings." : {
       "localizations" : {
         "ja" : {
@@ -1536,6 +1539,7 @@
       }
     },
     "Downloaded from the models' official release and verified against a checksum before use." : {
+      "extractionState" : "stale",
       "localizations" : {
         "ja" : {
           "stringUnit" : {
@@ -1870,6 +1874,9 @@
           }
         }
       }
+    },
+    "Every file is verified against a checksum before use, and anything that does not match is discarded." : {
+
     },
     "Every setting is timed on the frame you are working on. This takes a few minutes and the device will get warm." : {
       "localizations" : {
@@ -3396,6 +3403,16 @@
         }
       }
     },
+    "Morphiqo %@ is on the App Store. You have %@." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Morphiqo %1$@ is on the App Store. You have %2$@."
+          }
+        }
+      }
+    },
     "Morphiqo is not allowed to add to your photo library. You can turn that on in Settings, under Morphiqo." : {
       "localizations" : {
         "ja" : {
@@ -3731,6 +3748,9 @@
           }
         }
       }
+    },
+    "Not now" : {
+
     },
     "Note" : {
       "localizations" : {
@@ -6103,6 +6123,9 @@
           }
         }
       }
+    },
+    "Update" : {
+
     },
     "Uses the CPU alone. Very slow, but it always works." : {
       "localizations" : {
