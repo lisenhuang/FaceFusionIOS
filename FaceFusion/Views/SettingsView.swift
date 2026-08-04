@@ -410,6 +410,19 @@ struct SettingsView: View {
                         quietButton("Stop") { manager.cancel() }
                     }
                 }
+            } else if manager.isPreparingLibrary {
+                // The launch pass can still be hashing a model it is about to
+                // adopt, and until it is done "Download missing (340 MB)" is an
+                // offer to re-fetch weights that are already on the device.
+                // `install` refuses to start while the pass is running anyway,
+                // so leaving the button up would only make it look broken.
+                HStack(spacing: 10) {
+                    ProgressView().controlSize(.small)
+                    Text("Checking the models already on this device…")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             } else if missingBytes > 0 {
                 Button {
                     manager.install(catalogue)
@@ -424,7 +437,8 @@ struct SettingsView: View {
             } label: {
                 Label("Remove all models", systemImage: "trash")
             }
-            .disabled(manager.installedBytes == 0 || manager.isWorking)
+            .disabled(manager.installedBytes == 0 || manager.isWorking
+                      || manager.isPreparingLibrary)
 
             if let error = manager.lastError {
                 Banner(kind: .error, text: error)
@@ -469,6 +483,8 @@ struct SettingsView: View {
             return "\(Int(Double(received) / Double(max(total, 1)) * 100))%"
         case .verifying:
             return String(localized: "Verifying…", bundle: .uiLanguage)
+        case .checking:
+            return String(localized: "Checking…", bundle: .uiLanguage)
         case .failed:
             return String(localized: "Failed", bundle: .uiLanguage)
         }

@@ -85,7 +85,11 @@ struct OnboardingView: View {
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
 
-            if downloadSize > 0 {
+            // Withheld while the library is being checked. A user who already
+            // has every model is a second away from being told they need none
+            // of it, and "About 903 MB to fetch" in the meantime is alarming
+            // and wrong.
+            if downloadSize > 0, !manager.isPreparingLibrary {
                 Text("About \(formatBytes(downloadSize)) to fetch. Wi‑Fi is recommended.")
                     .font(.footnote.weight(.medium))
                     .foregroundStyle(.secondary)
@@ -123,9 +127,21 @@ struct OnboardingView: View {
                 }
             }
             .toggleStyle(.switch)
-            .disabled(manager.isWorking)
+            .disabled(manager.isWorking || manager.isPreparingLibrary)
 
-            if manager.isWorking {
+            if manager.isPreparingLibrary {
+                // Seconds, on an update that has 900 MB to hash and rename, and
+                // an unexplained wait in front of a Download button is how a
+                // user ends up downloading what they already have.
+                HStack(spacing: 10) {
+                    ProgressView().controlSize(.small)
+                    Text("Checking the models already on this device…")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            } else if manager.isWorking {
                 VStack(spacing: 10) {
                     ProgressView(value: Double(manager.sessionReceived),
                                  total: Double(max(manager.sessionTotal, 1)))
@@ -288,7 +304,7 @@ private struct ModelRow: View {
             Image(systemName: "checkmark.circle.fill").foregroundStyle(.green)
         case .failed:
             Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.orange)
-        case .downloading, .verifying:
+        case .downloading, .verifying, .checking:
             ProgressView().controlSize(.small)
         case .missing:
             Image(systemName: "arrow.down.circle").foregroundStyle(.secondary)
@@ -303,6 +319,8 @@ private struct ModelRow: View {
                 .foregroundStyle(.secondary)
         case .verifying:
             Text("Verifying…").font(.caption).foregroundStyle(.secondary)
+        case .checking:
+            Text("Checking…").font(.caption).foregroundStyle(.secondary)
         case .installed:
             Text("Installed").font(.caption).foregroundStyle(.secondary)
         case .failed:

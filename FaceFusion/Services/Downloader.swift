@@ -109,6 +109,26 @@ final class Downloader: NSObject, @unchecked Sendable {
         storage.withLockUnchecked { $0.resumeData[key] = nil }
     }
 
+    /// Every key this downloader still has work for.
+    ///
+    /// That is more than the transfers someone is currently awaiting: a task
+    /// the session kept running while the app was dead, a file that arrived
+    /// with nobody listening, and a resume payload waiting to be picked up are
+    /// all downloads in progress from the library's point of view. `ModelManager`
+    /// asks before it deletes anything, because a staging file belonging to one
+    /// of these is not litter.
+    func activeKeys() async -> Set<String> {
+        var keys = storage.withLockUnchecked { state in
+            Set(state.jobs.keys)
+                .union(state.unclaimed.keys)
+                .union(state.resumeData.keys)
+        }
+        for task in await session.allTasks {
+            if let key = task.taskDescription { keys.insert(key) }
+        }
+        return keys
+    }
+
     // MARK: - Downloading
 
     /// Downloads `url` to a caller-owned location.
