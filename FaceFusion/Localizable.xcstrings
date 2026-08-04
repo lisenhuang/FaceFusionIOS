@@ -664,6 +664,62 @@
         }
       }
     },
+    "Almost half the library, and swapping keeps working without it. You lose steadier tracking and the sharper, more detailed result." : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ライブラリのほぼ半分を占めますが、なくても顔の入れ替えは使えます。失われるのは追跡の安定性と、より鮮明で細部の残る仕上がりです。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "라이브러리의 거의 절반을 차지하지만, 없어도 얼굴 교체는 계속됩니다. 대신 추적의 안정성과 더 선명하고 디테일한 결과를 잃습니다."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "它们占了模型库将近一半，但没有它们也能换脸。失去的只是更稳定的跟踪，以及更清晰、更多细节的效果。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "它们占了模型库将近一半，但没有它们也能换脸。失去的只是更稳定的跟踪，以及更清晰、更多细节的效果。"
+          }
+        }
+      }
+    },
+    "An export is running. Models cannot be removed until it finishes." : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "書き出し中です。完了するまでモデルは削除できません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "내보내기가 진행 중입니다. 완료될 때까지 모델을 제거할 수 없습니다."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在导出。导出完成前无法移除模型。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在导出。导出完成前无法移除模型。"
+          }
+        }
+      }
+    },
     "An internal image buffer was invalid." : {
       "localizations" : {
         "ja" : {
@@ -1482,6 +1538,34 @@
         }
       }
     },
+    "Download" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ダウンロード"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "다운로드"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "下载"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "下载"
+          }
+        }
+      }
+    },
     "Download %@" : {
       "localizations" : {
         "ja" : {
@@ -1962,6 +2046,34 @@
         }
       }
     },
+    "Everything here can be downloaded again. Removing it costs the wait, not the work — no face, video or setting is touched. It is kept out of your iCloud backup for the same reason." : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ここにあるものはすべて再ダウンロードできます。削除して失うのは待ち時間だけで、顔も動画も設定も変わりません。同じ理由で iCloud バックアップの対象外にしています。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "여기 있는 것은 모두 다시 다운로드할 수 있습니다. 제거해도 잃는 것은 기다리는 시간뿐이며, 얼굴이나 동영상, 설정은 그대로입니다. 같은 이유로 iCloud 백업에서도 제외합니다."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "这里的一切都能重新下载。移除只会花掉等待时间，不会动到任何人脸、视频或设置。出于同样的原因，它们也不纳入 iCloud 备份。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "这里的一切都能重新下载。移除只会花掉等待时间，不会动到任何人脸、视频或设置。出于同样的原因，它们也不纳入 iCloud 备份。"
+          }
+        }
+      }
+    },
     "Export as HEVC" : {
       "localizations" : {
         "ja" : {
@@ -2239,6 +2351,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "换脸器"
+          }
+        }
+      }
+    },
+    "Face swapping needs all three. Remove one and the app returns to its download screen until it is fetched again." : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "顔の入れ替えには 3 つすべてが必要です。1 つでも削除すると、再取得するまでダウンロード画面に戻ります。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "얼굴 교체에는 세 가지가 모두 필요합니다. 하나라도 제거하면 다시 받을 때까지 다운로드 화면으로 돌아갑니다."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "换脸需要这三个模型。移除任何一个，App 都会回到下载界面，直到重新下载为止。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "换脸需要这三个模型。移除任何一个，App 都会回到下载界面，直到重新下载为止。"
           }
         }
       }
@@ -2563,6 +2703,34 @@
         }
       }
     },
+    "Free %@ and keep swapping" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ を空けても入れ替えはそのまま"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 확보하고 계속 사용하기"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "释放 %@，继续换脸"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "释放 %@，继续换脸"
+          }
+        }
+      }
+    },
     "GPU" : {
       "localizations" : {
         "ja" : {
@@ -2755,34 +2923,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "全部交由 GPU 和 CPU 处理。如果“自动”出现卡顿，值得一试。"
-          }
-        }
-      }
-    },
-    "Kept out of your iCloud backup on purpose: every byte can be fetched again, and 900 MB of weights is not worth your backup space." : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "iCloud バックアップの対象外にしています。すべて再取得できるため、900 MB のモデルデータでバックアップの容量を使う必要はありません。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "일부러 iCloud 백업에서 제외합니다. 모든 파일은 언제든 다시 받을 수 있고, 900MB에 이르는 가중치 파일에 백업 공간을 쓸 이유는 없기 때문입니다."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "刻意不纳入 iCloud 备份：这些数据随时都能重新下载，900 MB 的模型权重不值得占用你的备份空间。"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "刻意不纳入 iCloud 备份：这些数据随时都能重新下载，900 MB 的模型权重不值得占用你的备份空间。"
           }
         }
       }
@@ -3976,6 +4116,34 @@
         }
       }
     },
+    "Part of the face swap pipeline." : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "顔の入れ替え処理の一部です。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "얼굴 교체 파이프라인의 일부입니다."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "换脸流程的一部分。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "换脸流程的一部分。"
+          }
+        }
+      }
+    },
     "paste" : {
       "localizations" : {
         "ja" : {
@@ -4174,6 +4342,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "照片"
+          }
+        }
+      }
+    },
+    "Pipeline Component" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "パイプライン構成要素"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "파이프라인 구성 요소"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "流程组件"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "流程组件"
           }
         }
       }
@@ -4464,6 +4660,62 @@
         }
       }
     },
+    "Remove %@" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ を削除"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 제거"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "移除 %@"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "移除 %@"
+          }
+        }
+      }
+    },
+    "Remove %@?" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ を削除しますか？"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@을(를) 제거할까요?"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "要移除 %@ 吗？"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "要移除 %@ 吗？"
+          }
+        }
+      }
+    },
     "Remove all models" : {
       "localizations" : {
         "ja" : {
@@ -4516,6 +4768,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "移除所有模型？"
+          }
+        }
+      }
+    },
+    "Remove the optional models?" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "任意のモデルを削除しますか？"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "선택 사항 모델을 제거할까요?"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "要移除可选模型吗？"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "要移除可选模型吗？"
           }
         }
       }
@@ -4690,6 +4970,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "将替换 %lld / %lld 人。"
+          }
+        }
+      }
+    },
+    "Required" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "必須"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "필수"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "必需"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "必需"
           }
         }
       }
@@ -5254,6 +5562,34 @@
         }
       }
     },
+    "Storage" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ストレージ"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "저장 공간"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "存储空间"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "存储空间"
+          }
+        }
+      }
+    },
     "swap" : {
       "localizations" : {
         "ja" : {
@@ -5731,6 +6067,34 @@
         }
       }
     },
+    "The model could not be saved to this device." : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このデバイスにモデルを保存できませんでした。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 기기에 모델을 저장하지 못했습니다."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法将模型保存到此设备。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法将模型保存到此设备。"
+          }
+        }
+      }
+    },
     "The model manifest could not be read: %@" : {
       "localizations" : {
         "ja" : {
@@ -5755,35 +6119,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "无法读取模型清单：%@"
-          }
-        }
-      }
-    },
-    "The models come from their original public release. Each keeps its own licence, listed above." : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "各モデルは公開元による最初のリリースから取得しています。ライセンスはモデルごとに異なり、上に記載しています。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "모델은 원래의 공개 배포본을 그대로 사용합니다. 각 모델은 위에 표시된 자체 라이선스를 따릅니다."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "模型均来自其原始公开发布版本，各自的许可协议如上所列。"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "模型均来自其原始公开发布版本，各自的许可协议如上所列。"
           }
         }
       }
@@ -6040,30 +6375,114 @@
         }
       }
     },
-    "This frees %@. The app cannot swap a face again until they are downloaded, which needs a connection." : {
+    "This frees %@, the compiled graphs included. Morphiqo cannot swap a face again until they are downloaded, which needs a connection." : {
       "localizations" : {
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ の空き容量が増えます。もう一度ダウンロードするまで顔の入れ替えはできず、ダウンロードにはインターネット接続が必要です。"
+            "value" : "コンパイル済みのグラフを含めて %@ の空き容量が増えます。もう一度ダウンロードするまで Morphiqo は顔を入れ替えられず、ダウンロードにはインターネット接続が必要です。"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@의 공간을 확보합니다. 모델을 다시 다운로드할 때까지 얼굴을 바꿀 수 없으며, 다운로드하려면 인터넷 연결이 필요합니다."
+            "value" : "컴파일된 그래프까지 포함해 %@의 공간을 확보합니다. 다시 다운로드할 때까지 Morphiqo는 얼굴을 바꿀 수 없으며, 다운로드하려면 인터넷 연결이 필요합니다."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "这会释放 %@。在重新下载之前 App 无法再换脸，而下载需要联网。"
+            "value" : "这会释放 %@，其中包含已编译的计算图。在重新下载之前 Morphiqo 无法再换脸，而下载需要联网。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "这会释放 %@。在重新下载之前 App 无法再换脸，而下载需要联网。"
+            "value" : "这会释放 %@，其中包含已编译的计算图。在重新下载之前 Morphiqo 无法再换脸，而下载需要联网。"
+          }
+        }
+      }
+    },
+    "This frees %@. Morphiqo cannot swap a face again until it is downloaded, which needs a connection." : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ の空き容量が増えます。もう一度ダウンロードするまで Morphiqo は顔を入れ替えられず、ダウンロードにはインターネット接続が必要です。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@의 공간을 확보합니다. 다시 다운로드할 때까지 Morphiqo는 얼굴을 바꿀 수 없으며, 다운로드하려면 인터넷 연결이 필요합니다."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "这会释放 %@。在重新下载之前 Morphiqo 无法再换脸，而下载需要联网。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "这会释放 %@。在重新下载之前 Morphiqo 无法再换脸，而下载需要联网。"
+          }
+        }
+      }
+    },
+    "This frees %@. Swapping keeps working without it — the result is simply less refined." : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ の空き容量が増えます。なくても顔の入れ替えは使えます。仕上がりの精度が少し下がるだけです。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@의 공간을 확보합니다. 없어도 얼굴 교체는 계속되며, 결과가 조금 덜 정교해질 뿐입니다."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "这会释放 %@。没有它也能换脸，只是效果会略微粗糙一些。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "这会释放 %@。没有它也能换脸，只是效果会略微粗糙一些。"
+          }
+        }
+      }
+    },
+    "This frees %@. Swapping keeps working; results are less sharp and tracking less steady." : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ の空き容量が増えます。顔の入れ替えはそのまま使えますが、仕上がりの鮮明さと追跡の安定性は下がります。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@의 공간을 확보합니다. 얼굴 교체는 계속되지만 결과가 덜 선명하고 추적도 덜 안정적입니다."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "这会释放 %@。换脸仍然可用，但结果不那么清晰，跟踪也不那么稳定。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "这会释放 %@。换脸仍然可用，但结果不那么清晰，跟踪也不那么稳定。"
           }
         }
       }

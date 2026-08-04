@@ -22,6 +22,14 @@
 //  promise is the whole reason to run a face swapper locally rather than upload
 //  to a website, so it is written down rather than implied.
 //
+//  The storage half of the screen is organised around the one distinction that
+//  makes any of this worth doing: three of the five models are required and two
+//  are not. The optional pair is roughly 438 MB of the 903 — nearly half the
+//  library — and removing it leaves an app that still swaps faces, just without
+//  landmark refinement or detail enhancement. Removing a required model stops
+//  swapping until it has been downloaded again. Five undifferentiated rows and a
+//  Remove All hid the only choice on this screen a user can make safely.
+//
 
 import SwiftUI
 import Foundation
@@ -39,8 +47,18 @@ struct SettingsView: View {
     /// which is what actually outlives the sheet.
     @State private var benchmark = EngineBenchmark()
 
-    @State private var isConfirmingRemoveAll = false
+    /// What a confirmation is currently being asked about. One piece of state
+    /// for all three destructive actions: they ask the same question about
+    /// different sets, and three booleans would let two dialogs be true at once.
+    @State private var pending: Removal?
+    @State private var isRemoving = false
     @State private var isReloadingEngine = false
+
+    private enum Removal {
+        case one(ModelDescriptor)
+        case optional
+        case all
+    }
 
     private var manager: ModelManager { model.models }
     private var catalogue: [ModelDescriptor] { manager.manifest?.models ?? [] }
@@ -51,7 +69,9 @@ struct SettingsView: View {
                 appearanceSection
                 languageSection
                 performanceSection
-                modelsSection
+                storageSection
+                requiredSection
+                optionalSection
                 privacySection
             }
             .navigationTitle("Settings")
@@ -61,22 +81,30 @@ struct SettingsView: View {
                     Button("Done") { dismiss() }
                 }
             }
-            .confirmationDialog("Remove all models?",
-                                isPresented: $isConfirmingRemoveAll,
-                                titleVisibility: .visible) {
-                Button("Remove all models", role: .destructive) {
-                    Task { await removeAllModels() }
+            .confirmationDialog(confirmationTitle,
+                                isPresented: Binding(get: { pending != nil },
+                                                     set: { if !$0 { pending = nil } }),
+                                titleVisibility: .visible,
+                                presenting: pending) { removal in
+                Button("Remove", role: .destructive) {
+                    Task { await remove(removal) }
                 }
                 Button("Cancel", role: .cancel) { }
-            } message: {
-                Text("This frees \(formatBytes(manager.installedBytes)). The app cannot swap a face again until they are downloaded, which needs a connection.")
+            } message: { removal in
+                Text(confirmationMessage(for: removal))
             }
             // A download finishing while this sheet is open is the normal way
             // out of the "no models" state, and the engine will not start
             // itself. Without this the user closes Settings onto a studio that
             // looks ready and is not.
-            .onChange(of: manager.isReady) { _, ready in
-                guard ready else { return }
+            //
+            // Keyed on the loadable *set* rather than on `isReady`, for the same
+            // two reasons `RootView` is: it stays nil until the launch pass has
+            // decided the library, and a single optional model fetched from the
+            // rows below leaves `isReady` exactly where it was while changing
+            // what the engine ought to be running on.
+            .onChange(of: manager.loadableModels) { _, loadable in
+                guard loadable != nil else { return }
                 Task { await model.startEngineIfPossible() }
             }
         }
@@ -387,14 +415,10 @@ struct SettingsView: View {
         }
     }
 
-    // MARK: - Models
+    // MARK: - Storage
 
-    private var modelsSection: some View {
+    private var storageSection: some View {
         Section {
-            ForEach(catalogue) { descriptor in
-                modelRow(descriptor)
-            }
-
             LabeledContent("On disk", value: formatBytes(manager.installedBytes))
 
             if manager.isWorking {
@@ -433,44 +457,176 @@ struct SettingsView: View {
             }
 
             Button(role: .destructive) {
-                isConfirmingRemoveAll = true
+                pending = .all
             } label: {
                 Label("Remove all models", systemImage: "trash")
             }
-            .disabled(manager.installedBytes == 0 || manager.isWorking
-                      || manager.isPreparingLibrary)
+            .disabled(!canRemove || manager.installedBytes == 0)
 
             if let error = manager.lastError {
                 Banner(kind: .error, text: error)
                     .listRowInsets(EdgeInsets(top: 8, leading: 12, bottom: 8, trailing: 12))
             }
+
+            if model.isRendering {
+                Banner(kind: .info,
+                       text: String(localized: "An export is running. Models cannot be removed until it finishes.",
+                                    bundle: .uiLanguage))
+                    .listRowInsets(EdgeInsets(top: 8, leading: 12, bottom: 8, trailing: 12))
+            }
         } header: {
-            Text("Models")
+            Text("Storage")
         } footer: {
-            Text("Kept out of your iCloud backup on purpose: every byte can be fetched again, and 900 MB of weights is not worth your backup space.")
+            Text("Everything here can be downloaded again. Removing it costs the wait, not the work — no face, video or setting is touched. It is kept out of your iCloud backup for the same reason.")
+        }
+    }
+
+    // MARK: - The two halves of the library
+
+    private var requiredSection: some View {
+        Section {
+            ForEach(manager.requiredModels) { descriptor in
+                modelRow(descriptor)
+            }
+        } header: {
+            Text("Required")
+        } footer: {
+            Text("Face swapping needs all three. Remove one and the app returns to its download screen until it is fetched again.")
+        }
+    }
+
+    private var optionalSection: some View {
+        Section {
+            ForEach(manager.optionalModels) { descriptor in
+                modelRow(descriptor)
+            }
+
+            // The one action on this screen most people actually want, and the
+            // reason the library is split in two at all: nearly half the disk
+            // back, with an app that still works afterwards.
+            if installedOptionalBytes > 0 {
+                Button(role: .destructive) {
+                    pending = .optional
+                } label: {
+                    Label("Free \(formatBytes(installedOptionalBytes)) and keep swapping",
+                          systemImage: "trash")
+                }
+                .disabled(!canRemove)
+            }
+        } header: {
+            Text("Optional")
+        } footer: {
+            Text("Almost half the library, and swapping keeps working without it. You lose steadier tracking and the sharper, more detailed result.")
         }
     }
 
     private var missingBytes: Int64 { manager.downloadSize(for: catalogue) }
 
-    /// `LabeledContent` rather than a hand-built row: it is the one container
-    /// that already knows to stack its label above its value when the text no
-    /// longer fits beside it, which is most of what this screen needs at an
-    /// accessibility size.
+    private var installedOptionalBytes: Int64 {
+        manager.installedBytes(of: manager.optionalModels)
+    }
+
+    /// Removal is blocked while anything else owns the files: a download is
+    /// mid-verify, the launch pass is renaming them from another task, an export
+    /// has the engine running frame after frame, or a removal already started is
+    /// still waiting for the engine to let go.
+    ///
+    /// The measurement counts for the same reason, and it is the worst of them.
+    /// It rebuilds every session seven times over from `installedPaths()` taken
+    /// afresh each round, and "Remove all models" would empty the compile cache
+    /// directory Core ML is compiling into at that moment — the one thing the
+    /// launch pass is careful never to do.
+    private var canRemove: Bool {
+        !manager.isWorking && !manager.isPreparingLibrary
+            && !model.isRendering && !isRemoving && !isReloadingEngine
+            && !benchmark.isRunning
+    }
+
+    /// One model: what it does, what it costs, and the single control that acts
+    /// on it — Remove when it is installed, Download when it is not.
+    ///
+    /// The name is the *function* — "Face Enhancer", not the weight file it is
+    /// loaded from. Nothing a user reads names a model or says where it came
+    /// from, and `ModelDescriptor.displayName` is what guarantees that even for
+    /// a manifest entry this build does not recognise.
     private func modelRow(_ descriptor: ModelDescriptor) -> some View {
-        LabeledContent {
-            Text(statusText(for: descriptor))
-                .font(.callout.monospacedDigit())
-        } label: {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(descriptor.modelID?.displayName ?? descriptor.id)
-                if !descriptor.required {
-                    Text("Optional")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+        // At an accessibility size the size and the button drop underneath the
+        // name, the same trade the onboarding screen's row makes: a name, a
+        // sentence, a byte count and a 44 pt target have never fitted across a
+        // phone at AX5, and the target is the one thing that must not shrink.
+        Group {
+            if dynamicTypeSize.isAccessibilitySize {
+                VStack(alignment: .leading, spacing: 6) {
+                    modelTitle(descriptor)
+                    HStack(spacing: 8) {
+                        modelStatus(descriptor)
+                        Spacer(minLength: 8)
+                        modelAction(descriptor)
+                    }
+                }
+            } else {
+                HStack(alignment: .top, spacing: 10) {
+                    modelTitle(descriptor)
+                    Spacer(minLength: 8)
+                    modelStatus(descriptor)
+                    modelAction(descriptor)
                 }
             }
         }
+        .padding(.vertical, 2)
+    }
+
+    private func modelTitle(_ descriptor: ModelDescriptor) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(descriptor.displayName)
+            Text(descriptor.purpose)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    private func modelStatus(_ descriptor: ModelDescriptor) -> some View {
+        Text(statusText(for: descriptor))
+            .font(.callout.monospacedDigit())
+            .foregroundStyle(.secondary)
+    }
+
+    /// `.borderless` rather than the default: a `Form` row with a plain button
+    /// in it turns the *whole row* into that button, which here would mean
+    /// tapping a model's description deleted it.
+    @ViewBuilder
+    private func modelAction(_ descriptor: ModelDescriptor) -> some View {
+        if manager.isInstalled(descriptor) {
+            Button(role: .destructive) {
+                pending = .one(descriptor)
+            } label: {
+                rowButtonLabel("Remove")
+            }
+            .buttonStyle(.borderless)
+            .tint(.red)
+            .disabled(!canRemove)
+            .accessibilityLabel("Remove \(descriptor.displayName)")
+        } else {
+            Button {
+                manager.install([descriptor])
+            } label: {
+                rowButtonLabel("Download")
+            }
+            .buttonStyle(.borderless)
+            .disabled(manager.isWorking || manager.isPreparingLibrary || isRemoving)
+            .accessibilityLabel("Download \(descriptor.displayName)")
+        }
+    }
+
+    /// The 44 pt target belongs inside the label; wrapped around the `Button` it
+    /// would centre the button in a larger box rather than enlarge what the
+    /// button accepts a tap on.
+    private func rowButtonLabel(_ title: LocalizedStringKey) -> some View {
+        Text(title)
+            .font(.callout.weight(.medium))
+            .frame(minHeight: 44)
+            .contentShape(.rect)
     }
 
     private func statusText(for descriptor: ModelDescriptor) -> String {
@@ -564,12 +720,57 @@ struct SettingsView: View {
         isReloadingEngine = false
     }
 
+    // MARK: - Confirmation
+
+    private var confirmationTitle: String {
+        switch pending {
+        case .one(let descriptor):
+            return String(localized: "Remove \(descriptor.displayName)?", bundle: .uiLanguage)
+        case .optional:
+            return String(localized: "Remove the optional models?", bundle: .uiLanguage)
+        case .all, .none:
+            return String(localized: "Remove all models?", bundle: .uiLanguage)
+        }
+    }
+
+    /// Every one of these says what is freed and what stops working, because
+    /// those are the only two things the answer turns on.
+    private func confirmationMessage(for removal: Removal) -> String {
+        switch removal {
+        case .one(let descriptor) where descriptor.required:
+            return String(localized: "This frees \(formatBytes(descriptor.bytes)). Morphiqo cannot swap a face again until it is downloaded, which needs a connection.", bundle: .uiLanguage)
+        case .one(let descriptor):
+            return String(localized: "This frees \(formatBytes(descriptor.bytes)). Swapping keeps working without it — the result is simply less refined.", bundle: .uiLanguage)
+        case .optional:
+            return String(localized: "This frees \(formatBytes(installedOptionalBytes)). Swapping keeps working; results are less sharp and tracking less steady.", bundle: .uiLanguage)
+        case .all:
+            return String(localized: "This frees \(formatBytes(manager.installedBytes)), the compiled graphs included. Morphiqo cannot swap a face again until they are downloaded, which needs a connection.", bundle: .uiLanguage)
+        }
+    }
+
     /// Unloads before deleting. A live session has its graphs memory-mapped,
     /// and deleting the files underneath it leaves it working from a file with
-    /// no name — survivable, but there is no reason to find out.
-    private func removeAllModels() async {
+    /// no name — survivable, but there is no reason to find out. That order is
+    /// why every removal comes through here rather than calling the manager
+    /// directly, per-model removals included.
+    private func remove(_ removal: Removal) async {
+        guard canRemove else { return }
+        isRemoving = true
+        defer { isRemoving = false }
+
         await model.engine.unloadModels()
-        manager.removeAll()
+        switch removal {
+        case .one(let descriptor):
+            manager.remove(descriptor)
+        case .optional:
+            for descriptor in manager.optionalModels { manager.remove(descriptor) }
+        case .all:
+            manager.removeAll()
+        }
+        // Back up on whatever survived. Removing an optional model leaves the
+        // app perfectly usable, and leaving the engine unloaded until the next
+        // launch would be a far bigger price than the disk it just gave back.
+        await model.restartEngineAfterModelRemoval()
     }
 }
 

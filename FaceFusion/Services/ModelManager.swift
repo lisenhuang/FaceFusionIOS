@@ -42,6 +42,9 @@ struct ModelDescriptor: Codable, Identifiable, Sendable {
     var sha256: String
     var bytes: Int64
     var required: Bool
+    // Provenance, kept because the manifest carries it and dropping fields from
+    // a decoded shape is how a manifest and its reader stop agreeing. It is
+    // data, not copy: nothing renders these, and nothing should.
     var vendor: String
     var license: String
 
@@ -78,6 +81,18 @@ struct ModelDescriptor: Codable, Identifiable, Sendable {
     /// the tail of another and produce a file that only the checksum could
     /// catch — after the whole download had been paid for.
     var downloadKey: String { "\(id)-\(digestPrefix)" }
+
+    /// What the user is shown. Never `id`: that is the weight file's own name,
+    /// and no surface a user can read names a model or where it came from. A
+    /// manifest entry this build does not recognise still has to render as
+    /// something, so it renders as what it is.
+    var displayName: String {
+        modelID?.displayName ?? String(localized: "Pipeline Component", bundle: .uiLanguage)
+    }
+
+    var purpose: String {
+        modelID?.purpose ?? String(localized: "Part of the face swap pipeline.", bundle: .uiLanguage)
+    }
 }
 
 struct ModelManifest: Codable, Sendable {
@@ -110,10 +125,11 @@ final class ModelManager {
 
     /// True until the launch pass has finished deciding what is on disk.
     ///
-    /// Everything that could offer the user a download waits on this. The pass
-    /// takes milliseconds for a library that is already in the digest-named
-    /// scheme and seconds for one that has to be hashed and adopted, and during
-    /// those seconds "not installed yet" would be a lie.
+    /// Everything that could offer the user a download waits on this, and so
+    /// does the engine — see `isReadyToLoad`. The pass takes milliseconds for a
+    /// library that is already in the digest-named scheme and seconds for one
+    /// that has to be hashed and adopted, and during those seconds "not
+    /// installed yet" would be a lie.
     private(set) var isPreparingLibrary = true
 
     /// Bytes moved during the current download session, for the aggregate bar.
@@ -125,6 +141,15 @@ final class ModelManager {
     /// Partial files this process is in the middle of writing or verifying.
     /// The sweep refuses to touch them; see `sweep`.
     private var inFlightPartials: Set<String> = []
+
+    /// Legacy files the adoption pass deliberately left where they were.
+    ///
+    /// Adoption spares a file it could not read, or could not move, so that the
+    /// next launch can look at it again. That decision is worth nothing if the
+    /// sweep — which runs seconds later, and by name — reclaims it on the
+    /// grounds that the manifest does not claim that name. Sparing it there is
+    /// what turns "try again next launch" back into what it says.
+    private var preservedLegacy: Set<String> = []
 
     /// The process-wide downloader. It has to be the shared instance rather
     /// than one of our own: it owns a background `URLSession`, and a second
@@ -277,7 +302,7 @@ final class ModelManager {
             // Hashing a 900 MB library is seconds of `read`, and the actor this
             // object lives on is the one drawing the screen — so all of it goes
             // to a detached task and only the verdicts cross back.
-            let verdicts = await Task.detached(priority: .utility) {
+            let outcome = await Task.detached(priority: .utility) {
                 Self.reconcileLibrary(descriptors: descriptors,
                                       protectedPartials: protected)
             }.value
@@ -287,17 +312,23 @@ final class ModelManager {
             // shown the library filling in, at the cost of publishing a state
             // nothing else in the app is prepared for: `isReady` counts only
             // the required models, so it flips the moment the third of five is
-            // adopted, and two things act on that immediately. `RootView`'s
-            // `task(id:)` starts the engine — which snapshots `installedPaths()`
-            // on the spot, so the enhancer and the landmarker are simply absent
-            // from a session the UI then reports as having them, for the rest of
-            // the launch. And this pass still has the sweep and the
-            // compiled-graph reconciliation to do, the second of which empties
-            // the very directory Core ML would by then be compiling into.
-            // Neither is a race worth winning: the spec asks for the library to
-            // be decided *before* any install state is published, and deciding
-            // it in one move is what makes that true.
-            for (id, state) in verdicts { self.states[id] = state }
+            // adopted, and everything reading it acts on that immediately: the
+            // studio would replace the download screen while the enhancer and
+            // the landmarker are still being hashed, and this pass still has
+            // the sweep and the compiled-graph reconciliation to do, the second
+            // of which empties the very directory Core ML would by then be
+            // compiling into. Neither is a race worth winning: the spec asks
+            // for the library to be decided *before* any install state is
+            // published, and deciding it in one move is what makes that true.
+            // `isReadyToLoad` is the other half of it, and it is the half that
+            // holds the engine back — a library already in the digest-named
+            // scheme reads as complete from the seeded publish in `init`, which
+            // is before this task has done anything at all.
+            // The spared names go first, because the sweep that runs after the
+            // next download reads them and a name arriving late is a name that
+            // file was not spared under.
+            self.preservedLegacy = outcome.preserved
+            for (id, state) in outcome.verdicts { self.states[id] = state }
             self.isPreparingLibrary = false
         }
     }
@@ -312,12 +343,14 @@ final class ModelManager {
     /// nothing at all.
     nonisolated private static func reconcileLibrary(
         descriptors: [ModelDescriptor],
-        protectedPartials: Set<String>) -> [String: ModelInstallState] {
+        protectedPartials: Set<String>)
+    -> (verdicts: [String: ModelInstallState], preserved: Set<String>) {
 
         var verdicts: [String: ModelInstallState] = [:]
+        var preserved: Set<String> = []
         var installed: Set<String> = []
         for descriptor in descriptors {
-            let state = adopt(descriptor)
+            let state = adopt(descriptor, preserving: &preserved)
             if state == .installed { installed.insert(descriptor.id) }
             verdicts[descriptor.id] = state
         }
@@ -332,14 +365,16 @@ final class ModelManager {
         // negative number on exactly the library this line exists to explain.
         let outstanding = descriptors.filter { $0.required && !installed.contains($0.id) }
         if outstanding.isEmpty {
-            sweep(keeping: descriptors, protecting: protectedPartials)
+            sweep(keeping: descriptors,
+                  protecting: protectedPartials,
+                  sparing: preserved)
         } else {
             EngineLog.models.notice(
                 "deferred the model sweep: \(outstanding.count) required model(s) still missing")
         }
 
         reconcileCompileCache()
-        return verdicts
+        return (verdicts, preserved)
     }
 
     /// Decides what one model's bytes on disk are worth, adopting the legacy
@@ -349,13 +384,33 @@ final class ModelManager {
     /// anything: an existing library is ~900 MB written under the old names,
     /// and looking only for digest-named files would make every byte of it
     /// invisible.
-    nonisolated private static func adopt(_ descriptor: ModelDescriptor) -> ModelInstallState {
+    ///
+    /// A legacy file is deleted only where its bytes have been *shown* to be
+    /// the wrong ones. Where the pass could not find that out — it could not
+    /// read the file, or could not rename it — the name goes into `preserving`
+    /// instead, which spares it from the sweep and leaves it for the next
+    /// launch to try again.
+    nonisolated private static func adopt(_ descriptor: ModelDescriptor,
+                                          preserving preserved: inout Set<String>) -> ModelInstallState {
         let fileManager = FileManager.default
         let destination = modelsDirectory.appendingPathComponent(descriptor.fileName)
         if fileSize(at: destination) == descriptor.bytes { return .installed }
 
         let legacy = modelsDirectory.appendingPathComponent(descriptor.legacyFileName)
-        guard let legacySize = fileSize(at: legacy) else { return .missing }
+        guard let legacySize = fileSize(at: legacy) else {
+            // `fileSize` is nil for a file that is not there *and* for one whose
+            // attributes could not be read, and only the first of those is a
+            // reason to walk away. The second is the same discovery the hash
+            // below makes — the disk would not answer — and it gets the same
+            // answer, because the sweep deletes by name and would otherwise
+            // reclaim a file this pass never managed to look at.
+            if fileManager.fileExists(atPath: legacy.path) {
+                preserved.insert(descriptor.legacyFileName)
+                EngineLog.models.error(
+                    "could not measure \(descriptor.id, privacy: .public); left for the next launch")
+            }
+            return .missing
+        }
 
         guard legacySize == descriptor.bytes else {
             // The size-only scheme this replaces would have called it missing
@@ -365,7 +420,19 @@ final class ModelManager {
             return .missing
         }
 
-        let digest = (try? sha256(of: legacy)) ?? ""
+        guard let digest = try? sha256(of: legacy) else {
+            // The file could not be read through, which says nothing at all
+            // about whether it is the right file — a disk that returned an
+            // error and a stale set of weights are not the same discovery, and
+            // collapsing the two costs the user a 340 MB download over cellular
+            // to correct a guess. It stays where it is, and the sweep is told to
+            // leave it.
+            preserved.insert(descriptor.legacyFileName)
+            EngineLog.models.error(
+                "could not read \(descriptor.id, privacy: .public) to check it; left for the next launch")
+            return .missing
+        }
+
         guard digest == descriptor.sha256.lowercased() else {
             // Right size, wrong bytes: stale or corrupt, and the old scheme had
             // no way to notice. These are precisely the weights that would
@@ -388,6 +455,9 @@ final class ModelManager {
                 "adopted \(descriptor.id, privacy: .public) under its digest name; no download needed")
             return .installed
         } catch {
+            // The bytes are verified and it is only the rename that failed, so
+            // this is the last file on disk the sweep should be reclaiming.
+            preserved.insert(descriptor.legacyFileName)
             EngineLog.models.error(
                 "could not adopt \(descriptor.id, privacy: .public): \(error.localizedDescription, privacy: .public)")
             return .missing
@@ -403,8 +473,14 @@ final class ModelManager {
     /// The caller decides *when* it is safe to run — see the completeness rule
     /// in `reconcileLibrary`. This function enforces the other rule: a partial
     /// belonging to a live transfer is not litter.
+    ///
+    /// A legacy file `adopt` could not settle is spared as well. Adoption
+    /// leaving it for the next launch and the sweep deleting it on this one
+    /// cannot both be the policy, and of the two only one ever costs a
+    /// re-download.
     nonisolated private static func sweep(keeping descriptors: [ModelDescriptor],
-                                          protecting protectedPartials: Set<String>) {
+                                          protecting protectedPartials: Set<String>,
+                                          sparing preserved: Set<String>) {
         let fileManager = FileManager.default
         let claimed = Set(descriptors.map(\.fileName))
         guard let entries = try? fileManager.contentsOfDirectory(
@@ -416,7 +492,9 @@ final class ModelManager {
             // anything the manifest still wants is named after a digest the
             // manifest still lists, so two generations could sit here side by
             // side if a future build ever wanted them to.
-            if claimed.contains(name) || protectedPartials.contains(name) { continue }
+            if claimed.contains(name)
+                || protectedPartials.contains(name)
+                || preserved.contains(name) { continue }
             try? fileManager.removeItem(at: entry)
             EngineLog.models.notice("swept \(name, privacy: .public)")
         }
@@ -512,6 +590,31 @@ final class ModelManager {
         !requiredModels.isEmpty && requiredModels.allSatisfy(isInstalled)
     }
 
+    /// True once the library is both complete *and* decided.
+    ///
+    /// The engine waits on this rather than on `isReady`. A library already in
+    /// the digest-named scheme satisfies `isReady` from the seeded publish in
+    /// `init`, before the pass has run — and starting the engine there would set
+    /// Core ML compiling graphs into a directory `reconcileCompileCache` is
+    /// still entitled to empty, from under a pass that is still renaming the
+    /// very files those graphs were built from.
+    var isReadyToLoad: Bool { isReady && !isPreparingLibrary }
+
+    /// Exactly which models the engine ought to be running on, or `nil` while
+    /// the library is still being decided or is missing something required.
+    ///
+    /// The set, not a flag, because `isReadyToLoad` cannot see an *optional*
+    /// model arriving or leaving — it counts only the required three. A user who
+    /// reclaims the enhancer's disk from Settings and later downloads it again
+    /// would otherwise leave the engine running the session it built without
+    /// one, and the pipeline skips a stage it has no model for rather than
+    /// complaining: the toggle stays on, the result never changes, and nothing
+    /// says why until the app is relaunched.
+    var loadableModels: Set<ModelID>? {
+        guard isReadyToLoad else { return nil }
+        return Set(installedPaths().keys)
+    }
+
     var missingRequired: [ModelDescriptor] { requiredModels.filter { !isInstalled($0) } }
 
     /// Total bytes still to fetch for the given set.
@@ -519,15 +622,17 @@ final class ModelManager {
         descriptors.filter { !isInstalled($0) }.reduce(0) { $0 + $1.bytes }
     }
 
-    /// What the library currently occupies, for the Settings screen.
+    /// What the given set currently occupies.
     ///
     /// Taken from the manifest rather than from `stat`, which costs nothing and
     /// is exact: a model only counts as installed when its size already matches
     /// the manifest to the byte.
-    var installedBytes: Int64 {
-        guard let manifest else { return 0 }
-        return manifest.models.filter(isInstalled).reduce(0) { $0 + $1.bytes }
+    func installedBytes(of descriptors: [ModelDescriptor]) -> Int64 {
+        descriptors.filter(isInstalled).reduce(0) { $0 + $1.bytes }
     }
+
+    /// What the whole library occupies, for the Settings screen.
+    var installedBytes: Int64 { installedBytes(of: manifest?.models ?? []) }
 
     /// Absolute paths of everything installed, keyed for the engine.
     func installedPaths() -> [ModelID: String] {
@@ -569,12 +674,40 @@ final class ModelManager {
                     break
                 } catch {
                     self.states[descriptor.id] = .failed(error.localizedDescription)
-                    self.lastError = "\(descriptor.id): \(error.localizedDescription)"
+                    // The *function*, never the id. This banner is the most
+                    // likely of any surface here to be read by a user — it fires
+                    // on every download failure, not just an unrecognised
+                    // manifest entry — and a weight file's own name is exactly
+                    // what must never appear in one. That holds for the reason
+                    // as well as for the subject, which is what `userFacing`
+                    // is for.
+                    self.lastError = "\(descriptor.displayName): \(Self.userFacing(error))"
                 }
             }
             self.isWorking = false
             self.refreshInstallStates()
             await self.sweepIfComplete()
+        }
+    }
+
+    /// What a download failure is allowed to say out loud.
+    ///
+    /// `ModelError` is ours and was written to be read; a `URLError` describes
+    /// the network and names nothing. Everything else that reaches this catch is
+    /// a `FileManager` failure, and those quote the file they were working on —
+    /// which here is `<id>-<digest>.onnx` or its staging file, the one string
+    /// that must never appear on screen. So a file error is reported as what it
+    /// is and the detail goes to the log, where it is a diagnostic rather than a
+    /// disclosure.
+    private static func userFacing(_ error: Error) -> String {
+        switch error {
+        case is ModelError, is URLError:
+            return error.localizedDescription
+        default:
+            EngineLog.models.error(
+                "download could not be completed: \(error.localizedDescription, privacy: .public)")
+            return String(localized: "The model could not be saved to this device.",
+                          bundle: .uiLanguage)
         }
     }
 
@@ -592,8 +725,9 @@ final class ModelManager {
         guard let manifest, isReady else { return }
         let descriptors = manifest.models
         let protected = await protectedPartialNames()
+        let preserved = preservedLegacy
         await Task.detached(priority: .utility) {
-            Self.sweep(keeping: descriptors, protecting: protected)
+            Self.sweep(keeping: descriptors, protecting: protected, sparing: preserved)
         }.value
     }
 
@@ -603,10 +737,32 @@ final class ModelManager {
         isWorking = false
     }
 
-    /// Removes an installed model from disk.
+    /// Removes one model from disk, under every name its bytes could be under.
+    ///
+    /// All three, not just the digest-named file. A staging file left by an
+    /// interrupted download is the same weights, and a user reclaiming disk did
+    /// not mean "all but 340 MB of it". The legacy file matters for the same
+    /// reason and for one more: adoption may have spared it, in which case it is
+    /// the *only* copy on disk, and a removal that reports bytes freed while
+    /// leaving it there frees nothing at all. Any resume payload the downloader
+    /// still holds is left alone deliberately — it is keyed by the digest, so it
+    /// can only ever be applied to these exact weights, and re-downloading after
+    /// a removal should pick up where it stopped rather than start over.
+    ///
+    /// The caller unloads the engine first; see `SettingsView.remove`.
     func remove(_ descriptor: ModelDescriptor) {
-        try? FileManager.default.removeItem(at: location(of: descriptor))
+        let fileManager = FileManager.default
+        try? fileManager.removeItem(at: location(of: descriptor))
+        try? fileManager.removeItem(
+            at: Self.modelsDirectory.appendingPathComponent(descriptor.partialFileName))
+        try? fileManager.removeItem(
+            at: Self.modelsDirectory.appendingPathComponent(descriptor.legacyFileName))
+        // Nothing is being kept for a later adoption attempt now that the user
+        // has asked for it gone, and a name left here would have the next sweep
+        // sparing a file that no longer exists.
+        preservedLegacy.remove(descriptor.legacyFileName)
         states[descriptor.id] = .missing
+        EngineLog.models.notice("removed \(descriptor.id, privacy: .public)")
     }
 
     /// Reclaims the whole library.
@@ -629,6 +785,10 @@ final class ModelManager {
             try? fileManager.createDirectory(at: directory, withIntermediateDirectories: true)
         }
         Self.recordCompiledFrom([])
+        // Nothing is being kept for a later adoption attempt now that the user
+        // has asked for all of it gone, and a name left here would have the next
+        // sweep sparing a file that no longer exists.
+        preservedLegacy.removeAll()
         refreshInstallStates()
         lastError = nil
         EngineLog.models.notice("Removed the model library and the compiled graph cache")

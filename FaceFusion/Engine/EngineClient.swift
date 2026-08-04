@@ -294,9 +294,27 @@ final class EngineClient {
             // the failure with the underlying detail, and `AppModel` writes the
             // user-facing one. Three lines saying the same thing make the
             // console harder to read, not easier.
-            state = .failed(error.localizedDescription)
-            throw error
+            let reported = Self.userFacing(error)
+            state = .failed(reported.localizedDescription)
+            throw reported
         }
+    }
+
+    /// The load path is the one place an error can carry a model's file name.
+    ///
+    /// A failure to build a session comes back from ONNX Runtime as its own
+    /// status — "Load model from …/<weights>.onnx failed" — and a failure to
+    /// read the swapper's projection comes back from Foundation quoting the same
+    /// file. Both of those descriptions end up on screen, in the studio's
+    /// readiness line and in `AppModel.statusMessage`, and no surface a user
+    /// reads names a model or says where it came from. So anything from outside
+    /// the engine's own domain is reported in the engine's own words and the
+    /// original text is kept where it belongs: in `NSDebugDescriptionErrorKey`
+    /// and in the line `FaceFusionEngine.prepare` has already logged.
+    private static func userFacing(_ error: Error) -> Error {
+        let nsError = error as NSError
+        guard nsError.domain != engineErrorDomain else { return error }
+        return makeEngineNSError(.modelLoadFailed, underlying: nsError.localizedDescription)
     }
 
     /// Drops every session. The state goes back to `.idle` rather than staying

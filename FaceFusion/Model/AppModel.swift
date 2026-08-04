@@ -396,13 +396,25 @@ final class AppModel {
     // MARK: - Engine lifecycle
 
     func startEngineIfPossible() async {
-        guard models.isReady else {
+        // `loadableModels`, not `isReady`: it is nil until the launch pass has
+        // finished, and a library already in the digest-named scheme reads as
+        // complete before that pass has run. Starting the engine there would set
+        // Core ML compiling graphs into the very directory the pass may still
+        // empty, from files it may still be renaming.
+        guard let wanted = models.loadableModels else {
             EngineLog.client.notice(
                 "engine not started: manifest=\(self.models.manifest == nil ? "missing" : "loaded", privacy: .public) required=\(self.models.requiredModels.count) missing=\(self.models.missingRequired.map(\.id).joined(separator: ","), privacy: .public) dir=\(ModelManager.modelsDirectory.path, privacy: .public)")
             return
         }
         EngineLog.client.notice("starting engine with \(self.models.installedPaths().count) model(s)")
-        if case .ready = engine.state { return }
+        // Being ready is not on its own a reason to stop. The set on disk moves
+        // under a live engine now that Settings can delete a model and download
+        // it back, and a session built without the enhancer or the landmarker
+        // does not fail when asked for one — the pipeline skips the stage. So
+        // the question is not "is there an engine" but "is it running the models
+        // that are actually installed"; when it is not, prepare again.
+        if case .ready(let summary) = engine.state,
+           Set(summary.loadedModels.compactMap(ModelID.init(rawValue:))) == wanted { return }
         do {
             // A second enhancer session lets two frames be restored at once
             // instead of queueing on one, which is worth roughly the enhancer's
@@ -438,6 +450,27 @@ final class AppModel {
     func restartEngine() async {
         await engine.unloadModels()
         sourceFace = nil
+        await startEngineIfPossible()
+    }
+
+    /// Brings the engine back on whatever survived a removal.
+    ///
+    /// Settings has already unloaded and deleted by the time this runs — that
+    /// order is not negotiable, since a live session has the graphs memory-
+    /// mapped — so this either loads what is left or does nothing at all.
+    ///
+    /// The identities collected from the target go too. They came out of the old
+    /// recognizer session and — if the landmark refiner is what was removed —
+    /// out of a different alignment, so comparing them against anything the new
+    /// session produces would be comparing vectors from two different graphs.
+    /// Clearing `sourceFace` is what makes the portrait be encoded again:
+    /// `startEngineIfPossible` only re-encodes when it is nil, so leaving it set
+    /// would bring the engine back with no source while the studio still said
+    /// "Face ready." and left Export enabled.
+    func restartEngineAfterModelRemoval() async {
+        resetPeople()
+        sourceFace = nil
+        invalidatePreviewResult()
         await startEngineIfPossible()
     }
 

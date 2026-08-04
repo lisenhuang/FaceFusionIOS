@@ -279,10 +279,14 @@ private struct ModelRow: View {
         .accessibilityElement(children: .combine)
     }
 
+    /// The name is the *function* — "Face Enhancer", not the weight file it is
+    /// loaded from. Nothing a user reads names a model or says where it came
+    /// from, and `ModelDescriptor.displayName` is what guarantees that even for
+    /// a manifest entry this build does not recognise.
     private var title: some View {
         VStack(alignment: .leading, spacing: 2) {
             HStack(spacing: 6) {
-                Text(descriptor.modelID?.displayName ?? descriptor.id)
+                Text(descriptor.displayName)
                     .font(.callout.weight(.medium))
                 if !descriptor.required {
                     Text("Optional")
@@ -291,7 +295,7 @@ private struct ModelRow: View {
                         .background(.quaternary, in: .capsule)
                 }
             }
-            Text(descriptor.modelID?.purpose ?? "")
+            Text(descriptor.purpose)
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
