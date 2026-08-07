@@ -843,15 +843,6 @@ final class AppModel {
         guard sourceFace != nil, let frame = previewFrame, !isRendering else { return }
         guard case .ready = engine.state else { return }
 
-        guard targetIsImage || purchases.isPro else {
-            previewSwapTask?.cancel()
-            previewGeneration += 1
-            previewResult = nil
-            isPreviewing = false
-            statusMessage = String(localized: "Video swapping is a Pro feature. Upgrade to continue.", bundle: .uiLanguage)
-            return
-        }
-
         previewSwapTask?.cancel()
         previewGeneration += 1
         let generation = previewGeneration

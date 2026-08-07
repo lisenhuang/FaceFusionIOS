@@ -86,8 +86,11 @@ struct SettingsView: View {
                                                      set: { if !$0 { pending = nil } }),
                                 titleVisibility: .visible,
                                 presenting: pending) { removal in
-                Button("Remove", role: .destructive) {
+                Button {
                     Task { await remove(removal) }
+                } label: {
+                    Text("Remove")
+                        .foregroundStyle(.secondary)
                 }
                 Button("Cancel", role: .cancel) { }
             } message: { removal in
@@ -456,10 +459,11 @@ struct SettingsView: View {
                 }
             }
 
-            Button(role: .destructive) {
+            Button {
                 pending = .all
             } label: {
                 Label("Remove all models", systemImage: "trash")
+                    .foregroundStyle(.secondary)
             }
             .disabled(!canRemove || manager.installedBytes == 0)
 
@@ -505,11 +509,12 @@ struct SettingsView: View {
             // reason the library is split in two at all: nearly half the disk
             // back, with an app that still works afterwards.
             if installedOptionalBytes > 0 {
-                Button(role: .destructive) {
+                Button {
                     pending = .optional
                 } label: {
                     Label("Free \(formatBytes(installedOptionalBytes)) and keep swapping",
                           systemImage: "trash")
+                        .foregroundStyle(.secondary)
                 }
                 .disabled(!canRemove)
             }
@@ -598,13 +603,13 @@ struct SettingsView: View {
     @ViewBuilder
     private func modelAction(_ descriptor: ModelDescriptor) -> some View {
         if manager.isInstalled(descriptor) {
-            Button(role: .destructive) {
+            Button {
                 pending = .one(descriptor)
             } label: {
                 rowButtonLabel("Remove")
+                    .foregroundStyle(.secondary)
             }
             .buttonStyle(.borderless)
-            .tint(.red)
             .disabled(!canRemove)
             .accessibilityLabel("Remove \(descriptor.displayName)")
         } else {

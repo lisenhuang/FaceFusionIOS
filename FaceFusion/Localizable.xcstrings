@@ -3067,6 +3067,9 @@
         }
       }
     },
+    "Lifetime access" : {
+
+    },
     "Light" : {
       "localizations" : {
         "ja" : {
@@ -3150,6 +3153,9 @@
           }
         }
       }
+    },
+    "Loading lifetime access…" : {
+
     },
     "Loading the models with the new setting…" : {
       "localizations" : {
@@ -3666,6 +3672,9 @@
         }
       }
     },
+    "Morphiqo Pro" : {
+
+    },
     "Needs the Face Enhancer model." : {
       "localizations" : {
         "ja" : {
@@ -4172,6 +4181,9 @@
           }
         }
       }
+    },
+    "Pay once for permanent Pro access. No renewal." : {
+
     },
     "Performance" : {
       "localizations" : {
@@ -5171,6 +5183,9 @@
         }
       }
     },
+    "Saving and sharing results is a Pro feature. Upgrade to continue." : {
+
+    },
     "serious" : {
       "localizations" : {
         "ja" : {
@@ -5591,6 +5606,9 @@
         }
       }
     },
+    "Subscriptions renew automatically until cancelled. You can manage or cancel them in your App Store account settings." : {
+
+    },
     "swap" : {
       "localizations" : {
         "ja" : {
@@ -5618,6 +5636,9 @@
           }
         }
       }
+    },
+    "Swap videos and export your results with unlimited Pro access." : {
+
     },
     "System" : {
       "localizations" : {
@@ -6600,7 +6621,22 @@
         }
       }
     },
+    "Unlock lifetime" : {
+
+    },
+    "Unlock Pro" : {
+
+    },
+    "Unlock video export" : {
+
+    },
     "Update" : {
+
+    },
+    "Upgrade" : {
+
+    },
+    "Upgrade to save, share, or export video." : {
 
     },
     "Uses the CPU alone. Very slow, but it always works." : {
@@ -6715,6 +6751,9 @@
           }
         }
       }
+    },
+    "Video swapping is a Pro feature. Upgrade to continue." : {
+
     },
     "Which face" : {
       "localizations" : {
