@@ -14,9 +14,9 @@ import StoreKit
 @MainActor
 struct PaywallView: View {
     private enum Links {
-        static let privacy = URL(string: "https://morphiqo.vercel.app/privacy")!
-        static let support = URL(string: "https://morphiqo.vercel.app/support")!
-        static let terms = URL(string: "https://morphiqo.vercel.app/terms")!
+        static let privacy = URL(string: "https://morphiqo.app/privacy")!
+        static let support = URL(string: "https://morphiqo.app/support")!
+        static let terms = URL(string: "https://morphiqo.app/terms")!
     }
 
     @Environment(StoreManager.self) private var store
