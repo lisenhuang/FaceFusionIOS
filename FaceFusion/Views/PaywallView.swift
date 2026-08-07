@@ -8,10 +8,17 @@
 //
 
 import SwiftUI
+import Foundation
 import StoreKit
 
 @MainActor
 struct PaywallView: View {
+    private enum Links {
+        static let privacy = URL(string: "https://morphiqo.vercel.app/privacy")!
+        static let support = URL(string: "https://morphiqo.vercel.app/support")!
+        static let terms = URL(string: "https://morphiqo.vercel.app/terms")!
+    }
+
     @Environment(StoreManager.self) private var store
     @Environment(\.dismiss) private var dismiss
 
@@ -31,9 +38,19 @@ struct PaywallView: View {
                         visibleRelationships: .all
                     )
                     .storeButton(.visible, for: .restorePurchases)
+                    .subscriptionStorePolicyDestination(url: Links.privacy,
+                                                        for: .privacyPolicy)
+                    .subscriptionStorePolicyDestination(url: Links.terms,
+                                                        for: .termsOfService)
                     .frame(minHeight: 320)
 
                     lifetimePurchase
+
+                    Link(destination: Links.support) {
+                        Label("Need help? Contact support", systemImage: "questionmark.circle")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .font(.footnote.weight(.medium))
 
                     if let errorMessage = store.errorMessage {
                         Text(errorMessage)
