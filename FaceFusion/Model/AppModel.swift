@@ -1099,8 +1099,8 @@ final class AppModel {
         guard let targetURL, sourceFace != nil else { return }
         let isImage = targetIsImage
 
-        guard purchases.isPro || isImage else {
-            statusMessage = String(localized: "Video swapping is a Pro feature. Upgrade to continue.", bundle: .uiLanguage)
+        guard purchases.isPro else {
+            statusMessage = String(localized: "Exporting is a Pro feature. Upgrade to continue.", bundle: .uiLanguage)
             phase = .ready
             return
         }

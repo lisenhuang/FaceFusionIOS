@@ -65,6 +65,17 @@ struct StudioView: View {
                 .navigationTitle("Morphiqo")
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
+                    if !purchases.isPro {
+                        ToolbarItem(placement: .topBarLeading) {
+                            Button {
+                                showsPaywall = true
+                            } label: {
+                                Image(systemName: "crown.fill")
+                            }
+                            .accessibilityLabel("Upgrade to Pro")
+                        }
+                    }
+
                     ToolbarItem(placement: .topBarTrailing) {
                         Button {
                             presentSettings()
@@ -647,21 +658,14 @@ struct StudioView: View {
 
     private var exportButton: some View {
         Button {
-            if !model.targetIsImage && !purchases.isPro {
+            if !purchases.isPro {
                 showsPaywall = true
             } else {
                 Task { await model.export() }
             }
         } label: {
-            Label {
-                Text(!model.targetIsImage && !purchases.isPro
-                     ? "Unlock video export"
-                     : (model.targetIsImage ? "Export photo" : "Export video"))
-            } icon: {
-                Image(systemName: !model.targetIsImage && !purchases.isPro
-                      ? "lock.fill"
-                      : "square.and.arrow.up")
-            }
+            Label(model.targetIsImage ? "Export photo" : "Export video",
+                  systemImage: "square.and.arrow.up")
                 .padding(.horizontal, 6)
         }
         .buttonStyle(.borderedProminent)

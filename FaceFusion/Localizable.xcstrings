@@ -2214,6 +2214,9 @@
         }
       }
     },
+    "Exporting is a Pro feature. Upgrade to continue." : {
+
+    },
     "Face Detector" : {
       "localizations" : {
         "ja" : {
@@ -3673,6 +3676,9 @@
       }
     },
     "Morphiqo Pro" : {
+
+    },
+    "Need help? Contact support" : {
 
     },
     "Needs the Face Enhancer model." : {
@@ -6627,13 +6633,13 @@
     "Unlock Pro" : {
 
     },
-    "Unlock video export" : {
-
-    },
     "Update" : {
 
     },
     "Upgrade" : {
+
+    },
+    "Upgrade to Pro" : {
 
     },
     "Upgrade to save, share, or export video." : {
@@ -6751,9 +6757,6 @@
           }
         }
       }
-    },
-    "Video swapping is a Pro feature. Upgrade to continue." : {
-
     },
     "Which face" : {
       "localizations" : {
