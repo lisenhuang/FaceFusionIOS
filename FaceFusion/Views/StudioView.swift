@@ -41,6 +41,7 @@ import UniformTypeIdentifiers
 @MainActor
 struct StudioView: View {
     @Environment(AppModel.self) private var model
+    @Environment(StoreManager.self) private var purchases
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Environment(\.verticalSizeClass) private var verticalSizeClass
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
@@ -56,6 +57,7 @@ struct StudioView: View {
     /// failures through `statusMessage`, and where a *file* went is a fact about
     /// this screen, not about the app.
     @State private var saveNotice: String?
+    @State private var showsPaywall = false
 
     var body: some View {
         NavigationStack {
@@ -81,7 +83,10 @@ struct StudioView: View {
             Task { await model.handleDrop(url) }
             return true
         }
-        .fileExporter(isPresented: $isSavingToFiles,
+        .fileExporter(isPresented: Binding(
+                        get: { isSavingToFiles && purchases.isPro },
+                        set: { isSavingToFiles = $0 }
+                      ),
                       item: finishedURL.map(ExportedFile.init),
                       defaultFilename: finishedURL?.lastPathComponent) { result in
             switch result {
@@ -93,6 +98,9 @@ struct StudioView: View {
         }
         // A new render supersedes whatever the last one's buttons had to say.
         .onChange(of: finishedURL) { saveNotice = nil }
+        .sheet(isPresented: $showsPaywall) {
+            PaywallView()
+        }
     }
 
     // MARK: - The three shapes
@@ -639,10 +647,21 @@ struct StudioView: View {
 
     private var exportButton: some View {
         Button {
-            Task { await model.export() }
+            if !model.targetIsImage && !purchases.isPro {
+                showsPaywall = true
+            } else {
+                Task { await model.export() }
+            }
         } label: {
-            Label(model.targetIsImage ? "Export photo" : "Export video",
-                  systemImage: "square.and.arrow.up")
+            Label {
+                Text(!model.targetIsImage && !purchases.isPro
+                     ? "Unlock video export"
+                     : (model.targetIsImage ? "Export photo" : "Export video"))
+            } icon: {
+                Image(systemName: !model.targetIsImage && !purchases.isPro
+                      ? "lock.fill"
+                      : "square.and.arrow.up")
+            }
                 .padding(.horizontal, 6)
         }
         .buttonStyle(.borderedProminent)
@@ -719,18 +738,28 @@ struct StudioView: View {
                 .accessibilityLabel("Dismiss")
             }
 
-            ViewThatFits(in: .horizontal) {
-                HStack(spacing: 10) {
-                    saveToPhotosButton
-                    saveToFilesButton
-                    shareButton(url)
-                }
-                VStack(alignment: .leading, spacing: 10) {
-                    saveToPhotosButton.frame(maxWidth: .infinity)
+            if purchases.isPro {
+                ViewThatFits(in: .horizontal) {
                     HStack(spacing: 10) {
+                        saveToPhotosButton
                         saveToFilesButton
                         shareButton(url)
                     }
+                    VStack(alignment: .leading, spacing: 10) {
+                        saveToPhotosButton.frame(maxWidth: .infinity)
+                        HStack(spacing: 10) {
+                            saveToFilesButton
+                            shareButton(url)
+                        }
+                    }
+                }
+            } else {
+                VStack(alignment: .leading, spacing: 8) {
+                    Label("Upgrade to save, share, or export video.", systemImage: "lock.fill")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                    Button("Unlock Pro") { showsPaywall = true }
+                        .buttonStyle(.borderedProminent)
                 }
             }
 
@@ -841,4 +870,5 @@ private struct ExportedFile: Transferable {
 #Preview {
     StudioView()
         .environment(AppModel())
+        .environment(StoreManager.shared)
 }

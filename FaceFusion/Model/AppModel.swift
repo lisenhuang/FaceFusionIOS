@@ -81,6 +81,7 @@ final class AppModel {
 
     let models = ModelManager()
     let engine = EngineClient()
+    let purchases: StoreManager
 
     // MARK: Media
 
@@ -274,7 +275,8 @@ final class AppModel {
     private var sourceAccess: ScopedFile?
     private var targetAccess: ScopedFile?
 
-    init() {
+    init(purchases: StoreManager? = nil) {
+        self.purchases = purchases ?? .shared
         // Seeded from the persisted threshold rather than from the constant, so
         // the first frame previewed after a launch matches what the user last
         // settled on rather than briefly using the default.
@@ -841,6 +843,15 @@ final class AppModel {
         guard sourceFace != nil, let frame = previewFrame, !isRendering else { return }
         guard case .ready = engine.state else { return }
 
+        guard targetIsImage || purchases.isPro else {
+            previewSwapTask?.cancel()
+            previewGeneration += 1
+            previewResult = nil
+            isPreviewing = false
+            statusMessage = String(localized: "Video swapping is a Pro feature. Upgrade to continue.", bundle: .uiLanguage)
+            return
+        }
+
         previewSwapTask?.cancel()
         previewGeneration += 1
         let generation = previewGeneration
@@ -1097,6 +1108,12 @@ final class AppModel {
         guard let targetURL, sourceFace != nil else { return }
         let isImage = targetIsImage
 
+        guard purchases.isPro || isImage else {
+            statusMessage = String(localized: "Video swapping is a Pro feature. Upgrade to continue.", bundle: .uiLanguage)
+            phase = .ready
+            return
+        }
+
         // PNG for a photo rather than the original format: a re-encoded JPEG
         // would lose a second generation of detail on a file the user is
         // keeping. Videos are always MP4, which is what the writer produces.
@@ -1138,7 +1155,7 @@ final class AppModel {
                 // The preference is what the user already said they wanted
                 // done with a finished render; the result bar's own button is
                 // then a no-op that says so rather than a second copy.
-                if Preferences.shared.savesToPhotos {
+                if purchases.isPro && Preferences.shared.savesToPhotos {
                     await self.saveFinishedToPhotos()
                 }
             } catch is CancellationError {
@@ -1182,6 +1199,10 @@ final class AppModel {
     /// is the first moment the request means anything, and a prompt that
     /// arrives with a finished video behind it explains itself.
     func saveFinishedToPhotos() async {
+        guard purchases.isPro else {
+            statusMessage = String(localized: "Saving and sharing results is a Pro feature. Upgrade to continue.", bundle: .uiLanguage)
+            return
+        }
         guard case .finished(let url) = phase else { return }
         guard !isSavingToPhotos else { return }
         guard !finishedIsInPhotos else {

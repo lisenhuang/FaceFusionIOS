@@ -55,7 +55,8 @@ struct FaceFusionApp: App {
     /// The whole app's state, owned by the scene rather than by a view so that
     /// a rebuild — a rotation, a Split View resize, a Photos picker coming and
     /// going — cannot restart the engine or drop a render in progress.
-    @State private var model = AppModel()
+    @State private var purchases = StoreManager.shared
+    @State private var model = AppModel(purchases: .shared)
 
     @State private var hasClearedStaleExports = false
 
@@ -77,6 +78,7 @@ struct FaceFusionApp: App {
         WindowGroup {
             RootView()
                 .environment(model)
+                .environment(purchases)
                 // Once per launch, off the main path: the result arrives long
                 // after the first frame and nothing waits on it.
                 .task {
