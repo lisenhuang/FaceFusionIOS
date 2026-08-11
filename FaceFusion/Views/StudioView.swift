@@ -632,15 +632,23 @@ struct StudioView: View {
         // One row when the sentence and the button fit on one; otherwise the
         // button takes a line of its own and the full width, which is where a
         // thumb expects it on a phone.
+        //
+        // The row variant pins the button's label to one line. Without that the
+        // label is horizontally flexible, so a tight row never overflows — it
+        // squeezes the button until "Export video" wraps, `ViewThatFits` calls
+        // that a fit, and the stacked layout that exists for exactly this case
+        // is never chosen. The stacked variant stays flexible on purpose: at
+        // the largest accessibility sizes a full-width button that wraps beats
+        // one that clips.
         ViewThatFits(in: .horizontal) {
             HStack(spacing: 12) {
                 readinessLine
                 Spacer(minLength: 8)
-                exportButton
+                exportButton(fittingOneLine: true)
             }
             VStack(alignment: .leading, spacing: 10) {
                 readinessLine
-                exportButton.frame(maxWidth: .infinity)
+                exportButton(fittingOneLine: false).frame(maxWidth: .infinity)
             }
         }
     }
@@ -675,7 +683,7 @@ struct StudioView: View {
         return String(localized: "Ready to export.", bundle: .uiLanguage)
     }
 
-    private var exportButton: some View {
+    private func exportButton(fittingOneLine: Bool) -> some View {
         Button {
             if !purchases.isPro {
                 showsPaywall = true
@@ -686,6 +694,7 @@ struct StudioView: View {
             Label(model.targetIsImage ? "Export photo" : "Export video",
                   systemImage: "square.and.arrow.up")
                 .padding(.horizontal, 6)
+                .fixedSize(horizontal: fittingOneLine, vertical: false)
         }
         .buttonStyle(.borderedProminent)
         .controlSize(.large)
@@ -762,16 +771,19 @@ struct StudioView: View {
             }
 
             if purchases.isPro {
+                // Same rule as `idleBar`: labels in the row variant refuse to
+                // wrap, so a row that cannot hold them falls through to the
+                // stacked layout instead of showing two-line buttons.
                 ViewThatFits(in: .horizontal) {
                     HStack(spacing: 10) {
-                        saveToPhotosButton
-                        saveToFilesButton
+                        saveToPhotosButton(fittingOneLine: true)
+                        saveToFilesButton(fittingOneLine: true)
                         shareButton(url)
                     }
                     VStack(alignment: .leading, spacing: 10) {
-                        saveToPhotosButton.frame(maxWidth: .infinity)
+                        saveToPhotosButton(fittingOneLine: false).frame(maxWidth: .infinity)
                         HStack(spacing: 10) {
-                            saveToFilesButton
+                            saveToFilesButton(fittingOneLine: false)
                             shareButton(url)
                         }
                     }
@@ -795,7 +807,7 @@ struct StudioView: View {
         }
     }
 
-    private var saveToPhotosButton: some View {
+    private func saveToPhotosButton(fittingOneLine: Bool) -> some View {
         Button {
             saveNotice = nil
             isSavingToPhotos = true
@@ -811,18 +823,20 @@ struct StudioView: View {
                 ProgressView().controlSize(.small)
             } else {
                 Label("Save to Photos", systemImage: "photo.badge.plus")
+                    .fixedSize(horizontal: fittingOneLine, vertical: false)
             }
         }
         .buttonStyle(.borderedProminent)
         .disabled(isSavingToPhotos)
     }
 
-    private var saveToFilesButton: some View {
+    private func saveToFilesButton(fittingOneLine: Bool) -> some View {
         Button {
             saveNotice = nil
             isSavingToFiles = true
         } label: {
             Label("Save to Files", systemImage: "folder")
+                .fixedSize(horizontal: fittingOneLine, vertical: false)
         }
         .buttonStyle(.bordered)
     }
