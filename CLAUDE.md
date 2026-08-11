@@ -65,6 +65,35 @@ xcodebuild -project FaceFusion.xcodeproj -scheme Morphiqo \
   `setReferenceFaces`, unloading) runs as a barrier. Adding a method that mutates
   pipeline state without a barrier is a data race with in-flight frames.
 
+## The app is published
+
+Morphiqo is on the App Store and people have it installed. Every change has to
+be one an existing install can *upgrade into*: the first launch after an update
+starts with whatever the previous version left on the device, and "works on a
+clean install" is not the bar.
+
+- **`UserDefaults` written by an older build.** Register new preferences with
+  `register(defaults:)` and read them through that, so an absent key reads as
+  the intended default rather than `false` or `0`. Never change what an existing
+  key means, and never reuse one for a different type.
+- **The model library on disk.** `models.json` is content-addressed. Adding an
+  entry is safe and costs an existing user nothing until they choose to download
+  it; changing an entry's digest makes the copy they already have stale and
+  charges them the download again. The sweep deletes whatever the manifest no
+  longer claims, so work out what a rename would reclaim before renaming
+  anything.
+- **Derived caches keyed by what you are changing.** The Core ML compile cache is
+  keyed by model file name — a change that renames model files silently spends
+  the whole compile cost on the next launch.
+- **Anything persisted or decoded.** Saved settings, the benchmark summary, the
+  onboarding flag. The `Codable` engine types are the sharp edge: a new field
+  needs a default so an older blob still decodes, and a removed or renamed one
+  has to be tolerated rather than assumed gone.
+
+If a change genuinely cannot be made upgrade-safe, say so and describe the
+migration it needs — do not ship something that only holds together on a device
+that has never run the app before.
+
 ## Privacy is a hard constraint, not a goal
 
 The only network request this app makes is the model download in `Downloader`.
@@ -87,6 +116,14 @@ Ask first, every time.
 "I asked in that same turn" means I said so. It is not implied by my asking you
 to finish a feature, fix a test, or tidy something up, and a previous commit I
 approved does not authorise the next one.
+
+### Work lands on `main`
+
+When I do ask for a commit, the change belongs on `main` by the end of it:
+branch, commit, merge back with `--no-ff`, and push `main` to the remote. Do not
+leave finished work parked on a feature branch waiting for a pull request unless
+I ask for one — a branch nobody merges is a change nobody has. Push the branch
+too, so the history of how it landed survives.
 
 ### The commit is mine, and so is the name on it
 
