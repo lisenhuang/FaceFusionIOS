@@ -27,6 +27,7 @@ enum ModelID: String, Codable, CaseIterable, Sendable, CodingKeyRepresentable {
     case faceRecognizer = "arcface_w600k_r50"
     case faceSwapper    = "inswapper_128_fp16"
     case faceEnhancer   = "gfpgan_1.4"
+    case faceOccluder   = "dfl_xseg"
 
     /// Models without which no swap can run at all.
     static let required: [ModelID] = [.faceDetector, .faceRecognizer, .faceSwapper]
@@ -43,6 +44,7 @@ enum ModelID: String, Codable, CaseIterable, Sendable, CodingKeyRepresentable {
         case .faceRecognizer: return String(localized: "Identity Encoder", bundle: .uiLanguage)
         case .faceSwapper:    return String(localized: "Face Swapper", bundle: .uiLanguage)
         case .faceEnhancer:   return String(localized: "Face Enhancer", bundle: .uiLanguage)
+        case .faceOccluder:   return String(localized: "Occlusion Mask", bundle: .uiLanguage)
         }
     }
 
@@ -53,6 +55,7 @@ enum ModelID: String, Codable, CaseIterable, Sendable, CodingKeyRepresentable {
         case .faceRecognizer: return String(localized: "Encodes the identity of your source face.", bundle: .uiLanguage)
         case .faceSwapper:    return String(localized: "Performs the actual face replacement.", bundle: .uiLanguage)
         case .faceEnhancer:   return String(localized: "Restores detail and sharpness in the swapped face.", bundle: .uiLanguage)
+        case .faceOccluder:   return String(localized: "Keeps hands, hair and objects that cross the face from being painted over.", bundle: .uiLanguage)
         }
     }
 }
@@ -338,6 +341,9 @@ struct SwapOptions: Codable, Sendable {
     var enhancementBlend: Double
     /// Feathering of the paste-back mask. Mirrors `face_mask_blur`.
     var maskBlur: Double
+    /// Carve occluding objects — hands, hair — out of the paste mask, when the
+    /// occluder model is loaded. Mirrors `occlusion` in `face_mask_types`.
+    var maskOcclusion: Bool
     /// Minimum detector confidence.
     var detectorScore: Double
     /// Use the 68-point landmarker to refine alignment when available.
@@ -348,6 +354,7 @@ struct SwapOptions: Codable, Sendable {
          enhanceFace: Bool = true,
          enhancementBlend: Double = 0.8,
          maskBlur: Double = 0.3,
+         maskOcclusion: Bool = true,
          detectorScore: Double = 0.5,
          refineLandmarks: Bool = true) {
         self.selection = selection
@@ -355,6 +362,7 @@ struct SwapOptions: Codable, Sendable {
         self.enhanceFace = enhanceFace
         self.enhancementBlend = enhancementBlend
         self.maskBlur = maskBlur
+        self.maskOcclusion = maskOcclusion
         self.detectorScore = detectorScore
         self.refineLandmarks = refineLandmarks
     }

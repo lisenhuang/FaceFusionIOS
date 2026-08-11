@@ -35,6 +35,7 @@ final class SwapPipeline {
     private var recognizer: FaceRecognizer?
     private var swapper: FaceSwapper?
     private var enhancer: FaceEnhancer?
+    private var occluder: FaceOccluder?
 
     /// Identity of the user's chosen source face, projected into the swapper's
     /// conditioning space once and reused for every frame.
@@ -60,7 +61,7 @@ final class SwapPipeline {
             || existing.tuning != config.tuning {
             runtime.unloadAll()
             detector = nil; landmarker = nil; recognizer = nil
-            swapper = nil; enhancer = nil
+            swapper = nil; enhancer = nil; occluder = nil
             sourceEmbedding = nil; projectedSource = nil
             // Reference identities came out of the old recognizer session.
             // Keeping them would compare vectors from two different graphs.
@@ -71,7 +72,7 @@ final class SwapPipeline {
         try FileManager.default.createDirectory(atPath: config.modelCacheDirectory,
                                                 withIntermediateDirectories: true)
 
-        try load(into: runtime, config: config, optional: [.faceLandmarker, .faceEnhancer])
+        try load(into: runtime, config: config, optional: [.faceLandmarker, .faceEnhancer, .faceOccluder])
         try bindStages(runtime, config: config)
 
         return EnginePreparation(loadedModels: runtime.loadedModels,
@@ -83,19 +84,21 @@ final class SwapPipeline {
     func unloadAll() {
         runtime?.unloadAll()
         detector = nil; landmarker = nil; recognizer = nil
-        swapper = nil; enhancer = nil
+        swapper = nil; enhancer = nil; occluder = nil
         sourceEmbedding = nil; projectedSource = nil
         referenceFaces = nil
         configuration = nil
     }
 
-    /// Gives the enhancer's weights back to the system under memory pressure.
+    /// Gives the optional models' weights back to the system under memory
+    /// pressure.
     ///
     /// macOS could ignore a memory warning: the models lived in a helper the
     /// app could afford to lose. Here they are in the app, and being jetsammed
     /// half way through a ten-minute render costs the whole render — so when
-    /// the system asks, the enhancer goes. Dropping it costs sharpness in the
-    /// swapped face and nothing else; every other model is load-bearing.
+    /// the system asks, the enhancer and the occluder go. Dropping them costs
+    /// sharpness in the swapped face and the handling of hands and hair in
+    /// front of it, and nothing else; every other model is load-bearing.
     ///
     /// The Core ML graphs are owned by the `ORTSession`s, so the sessions are
     /// what has to be released for the memory to actually come back — nilling
@@ -122,12 +125,18 @@ final class SwapPipeline {
     /// them mid-export would fail every subsequent frame with a stale-reference
     /// error — a far worse outcome than a softer face.
     func memoryPressureUnloadOptional() {
-        guard let runtime, enhancer != nil else { return }
+        guard let runtime, enhancer != nil || occluder != nil else { return }
 
-        enhancer = nil
-        runtime.unload(.faceEnhancer)
+        if enhancer != nil {
+            enhancer = nil
+            runtime.unload(.faceEnhancer)
+        }
+        if occluder != nil {
+            occluder = nil
+            runtime.unload(.faceOccluder)
+        }
         EngineLog.engine.notice(
-            "memory pressure: enhancer unloaded; detail restoration is off until the next prepare")
+            "memory pressure: optional models unloaded; detail restoration and occlusion masking are off until the next prepare")
     }
 
     // MARK: - Chosen faces
@@ -268,7 +277,27 @@ final class SwapPipeline {
             timing.swap += Date().timeIntervalSince(swapStarted)
 
             let pasteStarted = Date()
-            let mask = FaceMasker.boxMask(size: FaceSwapper.inputSize, blur: options.maskBlur)
+            var mask = FaceMasker.boxMask(size: FaceSwapper.inputSize, blur: options.maskBlur)
+            if options.maskOcclusion, let occluder {
+                do {
+                    // Computed on the *input* frame with the swap's own
+                    // transform, so the mask sees the hand exactly where the
+                    // patch is about to land. The combine is an element-wise
+                    // minimum, the reference's `numpy.minimum.reduce`, and the
+                    // mutation copies the cached box mask rather than editing
+                    // it in place.
+                    let occlusion = try occluder.occlusionMask(image: input,
+                                                               transform: transform,
+                                                               cropSize: FaceSwapper.inputSize)
+                    mask.intersect(with: occlusion)
+                    mask.clamp01()
+                } catch {
+                    // A face still gets swapped without its occlusion mask —
+                    // quality degrades to the box mask rather than the frame
+                    // failing.
+                    EngineLog.inference.error("occlusion mask skipped: \(error.localizedDescription, privacy: .public)")
+                }
+            }
             output.pasteBack(patch: crop, mask: mask, transform: transform)
             timing.paste += Date().timeIntervalSince(pasteStarted)
             swappedLandmarks.append(landmarks)
@@ -283,7 +312,8 @@ final class SwapPipeline {
                     try enhancer.enhance(image: output,
                                          landmarks: landmarks,
                                          maskBlur: options.maskBlur,
-                                         blend: options.enhancementBlend)
+                                         blend: options.enhancementBlend,
+                                         occluder: options.maskOcclusion ? occluder : nil)
                 } catch {
                     EngineLog.inference.error("enhancement skipped: \(error.localizedDescription, privacy: .public)")
                 }
@@ -391,6 +421,7 @@ final class SwapPipeline {
         // behind one session.
         let enhancerModels = runtime.models(.faceEnhancer)
         enhancer = enhancerModels.isEmpty ? nil : FaceEnhancer(models: enhancerModels)
+        occluder = runtime.model(.faceOccluder).map { FaceOccluder(model: $0) }
     }
 
     // MARK: - Helpers
