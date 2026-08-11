@@ -147,7 +147,7 @@ final class AppModel {
 
     // MARK: Options
 
-    // These six live in `Preferences` so they survive a relaunch, and are
+    // These seven live in `Preferences` so they survive a relaunch, and are
     // forwarded here under their original names so every view that reads
     // `model.enhanceFace` still does. Reading through the forwarding property
     // registers the view with `Preferences`' observation, so changing one from
@@ -157,6 +157,11 @@ final class AppModel {
     var enhanceFace: Bool {
         get { Preferences.shared.enhanceFace }
         set { Preferences.shared.enhanceFace = newValue }
+    }
+
+    var maskOcclusion: Bool {
+        get { Preferences.shared.maskOcclusion }
+        set { Preferences.shared.maskOcclusion = newValue }
     }
 
     var identityStrength: Double {
@@ -388,6 +393,7 @@ final class AppModel {
                     enhanceFace: enhanceFace && models.isInstalledModel(.faceEnhancer),
                     enhancementBlend: 0.8,
                     maskBlur: maskBlur,
+                    maskOcclusion: maskOcclusion && models.isInstalledModel(.faceOccluder),
                     detectorScore: 0.5,
                     // Kept on for both source and target. The source identity is
                     // encoded once at selection time, so flipping this per job
@@ -482,7 +488,7 @@ final class AppModel {
     /// the app.
     func handleMemoryWarning() {
         engine.handleMemoryPressure()
-        statusMessage = String(localized: "Memory was running low, so detail enhancement has been switched off. It returns the next time the engine starts.", bundle: .uiLanguage)
+        statusMessage = String(localized: "Memory was running low, so detail enhancement and occlusion masking have been switched off. They return the next time the engine starts.", bundle: .uiLanguage)
     }
 
     // MARK: - Choosing media

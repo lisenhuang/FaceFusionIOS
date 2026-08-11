@@ -111,6 +111,10 @@ final class Preferences {
         didSet { defaults.set(enhanceFace, forKey: Key.enhanceFace) }
     }
 
+    var maskOcclusion: Bool {
+        didSet { defaults.set(maskOcclusion, forKey: Key.maskOcclusion) }
+    }
+
     var identityStrength: Double {
         didSet { defaults.set(identityStrength, forKey: Key.identityStrength) }
     }
@@ -152,6 +156,7 @@ final class Preferences {
             Key.language: AppLanguage.system.rawValue,
             Key.compute: ComputePolicy.automatic.rawValue,
             Key.enhanceFace: true,
+            Key.maskOcclusion: true,
             Key.identityStrength: 0.5,
             Key.maskBlur: 0.3,
             Key.matchDistance: defaultFaceMatchDistance,
@@ -168,6 +173,7 @@ final class Preferences {
         benchmarkSummary = defaults.string(forKey: Key.benchmarkSummary)
 
         enhanceFace = defaults.bool(forKey: Key.enhanceFace)
+        maskOcclusion = defaults.bool(forKey: Key.maskOcclusion)
         identityStrength = defaults.double(forKey: Key.identityStrength)
         maskBlur = defaults.double(forKey: Key.maskBlur)
         matchDistance = defaults.double(forKey: Key.matchDistance)
@@ -190,6 +196,7 @@ final class Preferences {
         static let compute = "engine.compute"
         static let benchmarkSummary = "engine.benchmarkSummary"
         static let enhanceFace = "swap.enhanceFace"
+        static let maskOcclusion = "swap.maskOcclusion"
         static let identityStrength = "swap.identityStrength"
         static let maskBlur = "swap.maskBlur"
         static let matchDistance = "swap.matchDistance"

@@ -340,6 +340,7 @@ struct StudioView: View {
             resemblanceSlider
             edgeSoftnessSlider
             enhanceToggle
+            occlusionToggle
             // Codec choice is meaningless for a photo; the photo path writes a
             // PNG, which is also why the export never re-encodes a JPEG twice.
             if !model.targetIsImage {
@@ -456,6 +457,24 @@ struct StudioView: View {
         }
         .disabled(!installed)
         .onChange(of: model.enhanceFace) { Task { await model.refreshPreview() } }
+    }
+
+    private var occlusionToggle: some View {
+        @Bindable var model = model
+        let installed = model.models.isInstalledModel(.faceOccluder)
+
+        return Toggle(isOn: $model.maskOcclusion) {
+            VStack(alignment: .leading, spacing: 1) {
+                Text("Keep hands and hair")
+                Text(installed ? "Objects crossing the face stay in front. Slower."
+                               : "Needs the Occlusion Mask model.")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .disabled(!installed)
+        .onChange(of: model.maskOcclusion) { Task { await model.refreshPreview() } }
     }
 
     private var codecToggle: some View {

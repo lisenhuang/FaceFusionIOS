@@ -2902,6 +2902,34 @@
         }
       }
     },
+    "Keep hands and hair" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "手や髪を残す"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "손과 머리카락 유지"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "保留手和头发"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "保留手和頭髮"
+          }
+        }
+      }
+    },
     "Keeps everything on the GPU and CPU. Worth trying if Automatic stutters." : {
       "localizations" : {
         "ja" : {
@@ -2926,6 +2954,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "全部交由 GPU 和 CPU 处理。如果“自动”出现卡顿，值得一试。"
+          }
+        }
+      }
+    },
+    "Keeps hands, hair and objects that cross the face from being painted over." : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "顔の前にある手や髪、物が塗りつぶされないようにします。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "얼굴을 가리는 손, 머리카락, 물체가 덧칠되지 않도록 합니다."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "防止遮挡面部的手、头发和物体被覆盖。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "防止遮擋臉部的手、頭髮和物體被覆蓋。"
           }
         }
       }
@@ -3496,30 +3552,30 @@
         }
       }
     },
-    "Memory was running low, so detail enhancement has been switched off. It returns the next time the engine starts." : {
+    "Memory was running low, so detail enhancement and occlusion masking have been switched off. They return the next time the engine starts." : {
       "localizations" : {
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "メモリが不足したため、ディテールの強調をオフにしました。次にエンジンを起動したときに戻ります。"
+            "value" : "メモリが不足したため、ディテールの強調と遮蔽マスクをオフにしました。次にエンジンを起動したときに戻ります。"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "메모리가 부족하여 디테일 향상을 껐습니다. 엔진을 다시 시작하면 다시 켜집니다."
+            "value" : "메모리가 부족하여 디테일 향상과 가림 마스크를 껐습니다. 엔진을 다시 시작하면 다시 켜집니다."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "内存不足，已关闭细节增强。下次引擎启动时会恢复。"
+            "value" : "内存不足，已关闭细节增强和遮挡蒙版。下次引擎启动时会恢复。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "内存不足，已关闭细节增强。下次引擎启动时会恢复。"
+            "value" : "内存不足，已关闭细节增强和遮挡蒙版。下次引擎启动时会恢复。"
           }
         }
       }
@@ -3705,6 +3761,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "需要 Face Enhancer 模型。"
+          }
+        }
+      }
+    },
+    "Needs the Occlusion Mask model." : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Occlusion Mask モデルが必要です。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Occlusion Mask 모델이 필요합니다."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "需要 Occlusion Mask 模型。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "需要 Occlusion Mask 模型。"
           }
         }
       }
@@ -4016,6 +4100,62 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "在此设备上未能测出任何结果。可能需要重新安装模型。"
+          }
+        }
+      }
+    },
+    "Objects crossing the face stay in front. Slower." : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "顔の前にあるものはそのまま残ります。処理は遅くなります。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "얼굴 앞의 물체가 그대로 유지됩니다. 대신 느립니다."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "遮挡面部的物体会保留在前面，但速度更慢。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "遮擋臉部的物體會保留在前面，但速度更慢。"
+          }
+        }
+      }
+    },
+    "Occlusion Mask" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "遮蔽マスク"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "가림 마스크"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "遮挡蒙版"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "遮擋遮罩"
           }
         }
       }
