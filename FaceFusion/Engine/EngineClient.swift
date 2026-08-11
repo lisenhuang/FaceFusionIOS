@@ -97,11 +97,14 @@ final class FaceFusionEngine: @unchecked Sendable {
     /// A barrier: it replaces the cached source identity that every in-flight
     /// swap is conditioning on.
     func analyzeSource(_ buffer: CVPixelBuffer,
-                       refineLandmarks: Bool = true) async throws -> SourceAnalysis {
+                       refineLandmarks: Bool = true,
+                       selecting index: Int? = nil) async throws -> SourceAnalysis {
         try Self.requireBGRA(buffer, "source")
         return try await perform(barrier: true) {
             try BGRAImage.wrapping(buffer, readOnly: true) { image in
-                try self.pipeline.analyzeSource(image, refineLandmarks: refineLandmarks)
+                try self.pipeline.analyzeSource(image,
+                                                refineLandmarks: refineLandmarks,
+                                                selecting: index)
             }
         }
     }
@@ -345,11 +348,12 @@ final class EngineClient {
 
     // MARK: Calls
 
-    func analyzeSource(_ buffer: CVPixelBuffer) async throws -> SourceAnalysis {
+    func analyzeSource(_ buffer: CVPixelBuffer,
+                       selecting index: Int? = nil) async throws -> SourceAnalysis {
         // Fixed to the refined alignment the swap uses. Encoding the source one
         // way and target faces another shifts the identity vector away from
         // what the swapper was trained on.
-        try await engine.analyzeSource(buffer, refineLandmarks: true)
+        try await engine.analyzeSource(buffer, refineLandmarks: true, selecting: index)
     }
 
     func detectFaces(_ buffer: CVPixelBuffer) async throws -> FrameAnalysis {

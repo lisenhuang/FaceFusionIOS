@@ -6813,30 +6813,58 @@
         }
       }
     },
-    "Using the largest of %lld faces." : {
+    "%lld faces found — tap the one to use." : {
       "localizations" : {
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%lld 個の顔のうち、最も大きいものを使います。"
+            "value" : "%lld 個の顔が見つかりました。使う顔をタップしてください。"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "얼굴 %lld개 가운데 가장 큰 얼굴을 사용합니다."
+            "value" : "얼굴 %lld개를 찾았습니다. 사용할 얼굴을 탭하세요."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "使用 %lld 张人脸中最大的一张。"
+            "value" : "找到 %lld 张人脸，点按要使用的一张。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "使用 %lld 张人脸中最大的一张。"
+            "value" : "找到 %lld 張人臉，點按要使用的一張。"
+          }
+        }
+      }
+    },
+    "Face %lld" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "顔 %lld"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "얼굴 %lld"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "人脸 %lld"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "人臉 %lld"
           }
         }
       }

@@ -263,22 +263,83 @@ struct StudioView: View {
     }
 
     private var sourceWell: some View {
-        MediaWell(title: "Source face",
-                  systemImage: "person.crop.square",
-                  hint: "Add the face you want to use",
-                  isFilled: model.sourceBuffer != nil,
-                  caption: sourceCaption,
-                  accepted: [.image],
-                  onPickFile: { url in Task { await model.useSource(url) } },
-                  onPickPhoto: { item in Task { await model.useSource(pickedItem: item) } },
-                  onClear: { model.clearSource() }) {
-            if let buffer = model.sourceBuffer,
-               let image = PixelSurface.makeCGImage(from: buffer) {
-                Image(decorative: image, scale: 1)
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
+        VStack(alignment: .leading, spacing: 8) {
+            MediaWell(title: "Source face",
+                      systemImage: "person.crop.square",
+                      hint: "Add the face you want to use",
+                      isFilled: model.sourceBuffer != nil,
+                      caption: sourceCaption,
+                      accepted: [.image],
+                      onPickFile: { url in Task { await model.useSource(url) } },
+                      onPickPhoto: { item in Task { await model.useSource(pickedItem: item) } },
+                      onClear: { model.clearSource() }) {
+                if let buffer = model.sourceBuffer,
+                   let image = PixelSurface.makeCGImage(from: buffer) {
+                    Image(decorative: image, scale: 1)
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                }
+            }
+
+            if model.sourceFaces.count > 1 {
+                sourceFaceStrip
             }
         }
+    }
+
+    /// One chip per face found in the portrait, left to right as they appear
+    /// in it. Tapping one re-encodes the source around that face; the ring
+    /// marks the identity the engine currently holds.
+    private var sourceFaceStrip: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                ForEach(model.sourceFaces, id: \.index) { face in
+                    sourceFaceChip(face)
+                }
+            }
+            // Room for the selection ring, which draws on the chip's border.
+            .padding(2)
+        }
+        // Re-encoding the source mid-export would recondition every frame
+        // after the barrier on a different person.
+        .disabled(model.isRendering)
+    }
+
+    /// Grows with Dynamic Type: the chip is the tap target as well as the
+    /// picture. `@ScaledMetric` scales down as well as up, so the floor is
+    /// enforced where the metric is used — 44 pt is the floor, not the ceiling.
+    @ScaledMetric(relativeTo: .caption) private var sourceChipSize: CGFloat = 44
+
+    private func sourceFaceChip(_ face: DetectedFace) -> some View {
+        let isChosen = face.index == model.sourceFace?.index
+        let side = max(sourceChipSize, Metrics.tapTarget)
+        let thumbnail = model.sourceFaceThumbnails.indices.contains(face.index)
+            ? model.sourceFaceThumbnails[face.index]
+            : nil
+
+        return Button {
+            Task { await model.chooseSourceFace(face.index) }
+        } label: {
+            Group {
+                if let thumbnail {
+                    Image(decorative: thumbnail, scale: 1)
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                } else {
+                    Image(systemName: "person.fill")
+                        .foregroundStyle(.tertiary)
+                }
+            }
+            .frame(width: side, height: side)
+            .clipShape(Circle())
+            .overlay {
+                Circle().strokeBorder(isChosen ? Color.accentColor : Color.clear,
+                                      lineWidth: 2)
+            }
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(Text("Face \(face.index + 1)", bundle: .uiLanguage))
+        .accessibilityAddTraits(isChosen ? [.isSelected] : [])
     }
 
     private var targetWell: some View {
@@ -308,7 +369,7 @@ struct StudioView: View {
                 : String(localized: "Encoding…", bundle: .uiLanguage)
         }
         return model.sourceFaceCount > 1
-            ? String(localized: "Using the largest of \(model.sourceFaceCount) faces.", bundle: .uiLanguage)
+            ? String(localized: "\(model.sourceFaceCount) faces found — tap the one to use.", bundle: .uiLanguage)
             : String(localized: "Face ready.", bundle: .uiLanguage)
     }
 
