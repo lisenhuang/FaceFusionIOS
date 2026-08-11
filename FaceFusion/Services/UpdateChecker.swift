@@ -21,9 +21,9 @@ import os
 
 enum UpdateChecker {
 
-    /// The App Store record. iOS and macOS share one listing, so they share
-    /// this identifier.
+    /// The App Store record shared by the platform targets.
     private static let appStoreID = "6797135085"
+    private static let appBundleID = "com.lisenhuang.morphiqo"
 
     /// What the store is selling, on the occasions it is ahead of us.
     struct Update: Equatable, Sendable {
@@ -91,17 +91,21 @@ enum UpdateChecker {
         }
     }
 
-    private static func parse(_ data: Data) -> Update? {
+    static func parse(_ data: Data) -> Update? {
         struct Payload: Decodable {
             struct Entry: Decodable {
                 let version: String
                 let trackViewUrl: String
+                let bundleId: String
+                let kind: String
             }
             let results: [Entry]
         }
 
         guard let payload = try? JSONDecoder().decode(Payload.self, from: data),
-              let entry = payload.results.first,
+              let entry = payload.results.first(where: {
+                  $0.bundleId == appBundleID && $0.kind == "software"
+              }),
               let url = URL(string: entry.trackViewUrl) else { return nil }
         return Update(version: entry.version, storeURL: url)
     }
