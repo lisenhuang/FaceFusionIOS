@@ -230,6 +230,87 @@ There is no backend, no analytics and no telemetry. Photos and videos are read
 from the pickers you choose, processed on the device, and written back to
 Photos or Files. Nothing is uploaded, and the app works with the network off.
 
+## Subscriptions
+
+`Services/StoreManager.swift` owns StoreKit. Three products today —
+`…pro.monthly`, `…pro.annual`, `…pro.lifetime` — with the two subscriptions in
+App Store Connect group `22293440`.
+
+**The paywall and the entitlement gate read from two different places, and that
+is the thing to know before touching any of this.**
+
+- `Views/PaywallView.swift` renders `SubscriptionStoreView(groupID:)`, which
+  asks the App Store for *every* subscription in the group that is for sale. It
+  does not consult `StoreManager` at all.
+- `StoreManager.refreshEntitlements()` grants Pro only when a verified
+  transaction's `productID` appears in `StoreManager.productIDs` — a hardcoded
+  array.
+
+So App Store Connect decides what is *sold*, and the binary decides what is
+*honoured*. A product added in the dashboard sells immediately, in builds
+already on people's phones, and unlocks nothing. There is no error and no
+crash: the user is charged and the app behaves as though they never subscribed.
+
+### Plan: adding a weekly subscription
+
+The goal is to offer weekly and stop offering monthly and annual, without
+touching anyone who is already subscribed.
+
+Existing subscribers are safe by default. Entitlements come from
+`Transaction.currentEntitlements`, not from what the paywall shows, so a
+monthly subscriber keeps Pro and keeps renewing however the paywall changes.
+The one way to break them is to *remove* `monthly`/`annual` from
+`productIDs` — that array is the entitlement allowlist, and dropping an id
+revokes Pro from people who are still paying. Add to it; never subtract.
+
+1. **Ship the binary first, before the product exists.**
+   Add `ProductID.weekly` and put it in `productIDs`. Safe to release ahead of
+   the product: `Product.products(for:)` simply does not return an id the store
+   does not know, and `SubscriptionStoreView` has nothing new to show. Nothing
+   changes for any user.
+
+   While here, make the gate resilient so this cannot recur: accept any
+   verified, unrevoked auto-renewable in group `22293440`, plus `lifetime`,
+   instead of matching a fixed list. Then a product added in the dashboard is
+   honoured the day it appears.
+
+2. **Then create and submit the weekly in App Store Connect.**
+   In group `22293440`, so it is a clean upgrade/downgrade against the existing
+   plans rather than something a user can hold *alongside* a monthly. Set the
+   group ranking deliberately — it decides whether a switch is immediate with
+   proration or deferred to the next renewal. A new in-app purchase can be
+   submitted on its own; it does not need another binary.
+
+3. **Hide monthly and annual from the paywall.**
+   `SubscriptionStoreView(groupID:)` cannot do this — the group is the App
+   Store's list, not ours. Either switch to
+   `SubscriptionStoreView(productIDs:)` and name only what should be offered
+   (client-side, reversible in a build, leaves the products purchasable for
+   anyone deep-linked to them), or mark them **Remove from Sale** in App Store
+   Connect (reversible, blocks new purchases everywhere, and means a lapsed
+   monthly subscriber cannot return to that plan).
+
+   Do not delete the products in either case. Removal from sale is reversible;
+   deletion is not, and the ids are still doing entitlement work.
+
+### The old-build hazard
+
+Shipping step 1 does not close the hole — it only covers people who update.
+Anyone still on an older binary will see the weekly the moment it is approved,
+because their `SubscriptionStoreView(groupID:)` reads the live group, and their
+copy of `productIDs` has never heard of it. They can be charged and get nothing.
+
+`UpdateChecker` is advisory today — an alert with a "Not now" button — so there
+is no version floor to lean on. Three ways out, in the order worth considering:
+
+- **Wait for adoption** between steps 1 and 2. Simplest; iOS update uptake is
+  fast, and the residual exposure is small and refundable.
+- **Give `UpdateChecker` a blocking minimum version** before step 2. Closes it
+  completely and reuses plumbing that already exists.
+- **Put the weekly in a new subscription group,** which old builds cannot see.
+  Avoid: a user could then hold a weekly and a monthly at once, and switching
+  between plans stops being an upgrade or a downgrade.
+
 ## Building
 
 ```sh
