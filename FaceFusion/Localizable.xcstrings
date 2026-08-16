@@ -166,6 +166,34 @@
         }
       }
     },
+    "%@ · not loaded" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ · 未読み込み"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ · 불러오지 못함"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ · 未加载"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ · 未載入"
+          }
+        }
+      }
+    },
     "%@ %lld milliseconds" : {
       "localizations" : {
         "en" : {
@@ -352,6 +380,34 @@
         }
       }
     },
+    "%lld faces found — tap the one to use." : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld 個の顔が見つかりました。使う顔をタップしてください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "얼굴 %lld개를 찾았습니다. 사용할 얼굴을 탭하세요."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "找到 %lld 张人脸，点按要使用的一张。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "找到 %lld 張人臉，點按要使用的一張。"
+          }
+        }
+      }
+    },
     "%lld%%" : {
       "localizations" : {
         "ja" : {
@@ -409,7 +465,32 @@
       }
     },
     "A new version is available" : {
-
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "新しいバージョンが利用できます"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "새 버전이 있습니다"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "有新版本可用"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "有新版本可用"
+          }
+        }
+      }
     },
     "A required AI model is missing. Reinstall the models from Settings." : {
       "localizations" : {
@@ -2016,7 +2097,32 @@
       }
     },
     "Every file is verified against a checksum before use, and anything that does not match is discarded." : {
-
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "すべてのファイルは使用前にチェックサムで検証され、一致しないものは破棄されます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "모든 파일은 사용 전에 체크섬으로 검증하며, 일치하지 않는 항목은 폐기합니다."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "每个文件在使用前都会校验校验和，不匹配的会被丢弃。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "每個檔案在使用前都會驗證校驗和，不相符的會被丟棄。"
+          }
+        }
+      }
     },
     "Every setting is timed on the frame you are working on. This takes a few minutes and the device will get warm." : {
       "localizations" : {
@@ -2215,7 +2321,60 @@
       }
     },
     "Exporting is a Pro feature. Upgrade to continue." : {
-
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "書き出しは Pro の機能です。続けるにはアップグレードしてください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "내보내기는 Pro 기능입니다. 계속하려면 업그레이드하세요."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "导出是 Pro 功能。请升级后继续。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "匯出是 Pro 功能。請升級後繼續。"
+          }
+        }
+      }
+    },
+    "Face %lld" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "顔 %lld"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "얼굴 %lld"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "人脸 %lld"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "人臉 %lld"
+          }
+        }
+      }
     },
     "Face Detector" : {
       "localizations" : {
@@ -2902,6 +3061,34 @@
         }
       }
     },
+    "Installed, but the engine could not load it. Everything works as though it were not there. Removing it and downloading it again usually fixes that." : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "インストール済みですが、エンジンが読み込めませんでした。存在しない場合と同じように動作します。削除してもう一度ダウンロードすると、たいていは解決します。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "설치되어 있지만 엔진이 불러오지 못했습니다. 없는 것과 똑같이 동작합니다. 제거한 뒤 다시 다운로드하면 대개 해결됩니다."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已安装，但引擎无法加载。当前表现与未安装时相同。移除后重新下载通常可以解决。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已安裝，但引擎無法載入。目前表現與未安裝時相同。移除後重新下載通常可以解決。"
+          }
+        }
+      }
+    },
     "Keep hands and hair" : {
       "localizations" : {
         "ja" : {
@@ -3127,7 +3314,32 @@
       }
     },
     "Lifetime access" : {
-
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "買い切り"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "평생 이용권"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "永久访问"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "永久存取"
+          }
+        }
+      }
     },
     "Light" : {
       "localizations" : {
@@ -3214,7 +3426,32 @@
       }
     },
     "Loading lifetime access…" : {
-
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "買い切りを読み込んでいます…"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "평생 이용권을 불러오는 중…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在加载永久访问…"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在載入永久存取…"
+          }
+        }
+      }
     },
     "Loading the models with the new setting…" : {
       "localizations" : {
@@ -3732,10 +3969,60 @@
       }
     },
     "Morphiqo Pro" : {
-
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Morphiqo Pro"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Morphiqo Pro"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Morphiqo Pro"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Morphiqo Pro"
+          }
+        }
+      }
     },
     "Need help? Contact support" : {
-
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "お困りですか？サポートに問い合わせる"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "도움이 필요하신가요? 지원팀에 문의하기"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "需要帮助？联系支持"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "需要協助？聯絡支援"
+          }
+        }
+      }
     },
     "Needs the Face Enhancer model." : {
       "localizations" : {
@@ -4046,7 +4333,32 @@
       }
     },
     "Not now" : {
-
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "今はしない"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "나중에"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "暂不"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "暫不"
+          }
+        }
+      }
     },
     "Note" : {
       "localizations" : {
@@ -4329,7 +4641,32 @@
       }
     },
     "Pay once for permanent Pro access. No renewal." : {
-
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "一度のお支払いで Pro をずっと利用できます。更新はありません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "한 번 결제로 Pro를 계속 이용합니다. 갱신이 없습니다."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "一次付费，永久使用 Pro。无需续订。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "一次付費，永久使用 Pro。無需續訂。"
+          }
+        }
+      }
     },
     "Performance" : {
       "localizations" : {
@@ -5330,7 +5667,32 @@
       }
     },
     "Saving and sharing results is a Pro feature. Upgrade to continue." : {
-
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "結果の保存と共有は Pro の機能です。続けるにはアップグレードしてください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "결과 저장과 공유는 Pro 기능입니다. 계속하려면 업그레이드하세요."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "保存和分享结果是 Pro 功能。请升级后继续。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "儲存與分享結果是 Pro 功能。請升級後繼續。"
+          }
+        }
+      }
     },
     "serious" : {
       "localizations" : {
@@ -5753,7 +6115,32 @@
       }
     },
     "Subscriptions renew automatically until cancelled. You can manage or cancel them in your App Store account settings." : {
-
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "サブスクリプションは解約するまで自動的に更新されます。App Store のアカウント設定で管理または解約できます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "구독은 취소할 때까지 자동으로 갱신됩니다. App Store 계정 설정에서 관리하거나 취소할 수 있습니다."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "订阅会自动续期，直到你取消。你可以在 App Store 账户设置中管理或取消。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "訂閱會自動續期，直到你取消。你可以在 App Store 帳戶設定中管理或取消。"
+          }
+        }
+      }
     },
     "swap" : {
       "localizations" : {
@@ -5784,7 +6171,32 @@
       }
     },
     "Swap videos and export your results with unlimited Pro access." : {
-
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pro なら動画の入れ替えも結果の書き出しも制限なく使えます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pro로 동영상 교체와 결과 내보내기를 제한 없이 사용하세요."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "使用 Pro，无限制地替换视频并导出结果。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "使用 Pro，無限制地替換影片並匯出結果。"
+          }
+        }
+      }
     },
     "System" : {
       "localizations" : {
@@ -6431,6 +6843,34 @@
         }
       }
     },
+    "There is nowhere to download this from." : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ダウンロードできる入手先がありません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "다운로드할 수 있는 위치가 없습니다."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "没有可供下载的来源。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "沒有可供下載的來源。"
+          }
+        }
+      }
+    },
     "There was not enough memory to run the measurement." : {
       "localizations" : {
         "ja" : {
@@ -6768,22 +7208,172 @@
       }
     },
     "Unlock lifetime" : {
-
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "買い切りを購入"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "평생 이용권 잠금 해제"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "解锁永久版"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "解鎖永久版"
+          }
+        }
+      }
     },
     "Unlock Pro" : {
-
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pro を解除"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pro 잠금 해제"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "解锁 Pro"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "解鎖 Pro"
+          }
+        }
+      }
     },
     "Update" : {
-
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "アップデート"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "업데이트"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "更新"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "更新"
+          }
+        }
+      }
     },
     "Upgrade" : {
-
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "アップグレード"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "업그레이드"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "升级"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "升級"
+          }
+        }
+      }
     },
     "Upgrade to Pro" : {
-
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pro にアップグレード"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pro로 업그레이드"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "升级到 Pro"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "升級至 Pro"
+          }
+        }
+      }
     },
     "Upgrade to save, share, or export video." : {
-
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "保存・共有・動画の書き出しにはアップグレードが必要です。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "저장, 공유, 동영상 내보내기를 하려면 업그레이드하세요."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "升级后即可保存、分享或导出视频。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "升級後即可儲存、分享或匯出影片。"
+          }
+        }
+      }
     },
     "Uses the CPU alone. Very slow, but it always works." : {
       "localizations" : {
@@ -6809,62 +7399,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "仅使用 CPU。非常慢，但总能运行。"
-          }
-        }
-      }
-    },
-    "%lld faces found — tap the one to use." : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%lld 個の顔が見つかりました。使う顔をタップしてください。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "얼굴 %lld개를 찾았습니다. 사용할 얼굴을 탭하세요."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "找到 %lld 张人脸，点按要使用的一张。"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "找到 %lld 張人臉，點按要使用的一張。"
-          }
-        }
-      }
-    },
-    "Face %lld" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "顔 %lld"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "얼굴 %lld"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "人脸 %lld"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "人臉 %lld"
           }
         }
       }
