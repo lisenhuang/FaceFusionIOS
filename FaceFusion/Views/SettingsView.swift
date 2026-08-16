@@ -588,7 +588,36 @@ struct SettingsView: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
+            if isInstalledButNotLoaded(descriptor) {
+                Text("Installed, but the engine could not load it. Everything works as though it were not there. Removing it and downloading it again usually fixes that.")
+                    .font(.caption)
+                    .foregroundStyle(.orange)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
         }
+    }
+
+    /// On disk, and yet not in the running engine.
+    ///
+    /// This state has been reachable and invisible: an optional model that fails
+    /// to load is skipped and logged, because a pipeline without the enhancer or
+    /// the occluder still swaps faces and failing the launch over one would be
+    /// worse. But the row went on saying "installed", the toggle went on saying
+    /// "Enhance detail", and the only difference the user could see was that the
+    /// result never changed. The engine already publishes what it loaded, so the
+    /// discrepancy is derivable — and the Web app has said exactly this since it
+    /// grew a reduced-footprint preparation.
+    ///
+    /// Only ever true for an optional model: a required one that fails to load
+    /// throws, and there is no engine to compare against.
+    private func isInstalledButNotLoaded(_ descriptor: ModelDescriptor) -> Bool {
+        // Before the engine is ready there is nothing better than the library to
+        // go on, and "installed" is the honest answer there: it is what the next
+        // preparation will try to load.
+        guard manager.isInstalled(descriptor),
+              let id = descriptor.modelID,
+              let loaded = model.engine.loadedModels else { return false }
+        return !loaded.contains(id)
     }
 
     private func modelStatus(_ descriptor: ModelDescriptor) -> some View {
@@ -637,6 +666,11 @@ struct SettingsView: View {
     private func statusText(for descriptor: ModelDescriptor) -> String {
         switch manager.states[descriptor.id] ?? .missing {
         case .installed:
+            // Parallel to "not installed" below, and the distinction is the
+            // point: the bytes are there, the stage is not.
+            if isInstalledButNotLoaded(descriptor) {
+                return String(localized: "\(formatBytes(descriptor.bytes)) · not loaded", bundle: .uiLanguage)
+            }
             return formatBytes(descriptor.bytes)
         case .missing:
             return String(localized: "\(formatBytes(descriptor.bytes)) · not installed", bundle: .uiLanguage)

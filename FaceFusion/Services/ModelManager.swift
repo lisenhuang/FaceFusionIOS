@@ -11,6 +11,10 @@
 //  discarded rather than installed — unverified weights are the one thing this
 //  app must never hand to the engine.
 //
+//  A model may name more than one place to fetch it from. A source that will
+//  not serve is tried past; a file that will not verify is not, and the two
+//  must not be confused — see `download` below and `Downloader`.
+//
 //  This is the only component in the app that touches the network at all.
 //
 //  Files are named for their contents: `<id>-<first 16 hex of sha256>.onnx`.
@@ -34,11 +38,32 @@
 import Foundation
 import CryptoKit
 import Observation
+// For `ORTVersion()` alone, which `CompileFingerprint` records. It is a real
+// symbol in the Objective-C bindings' `ort_env.h` ("Available since 1.15"),
+// not a constant invented here — and it belongs in the fingerprint precisely
+// because ORT's own cache key does not contain it.
+import OnnxRuntimeBindings
 import os
 
 struct ModelDescriptor: Codable, Identifiable, Sendable {
     var id: String
     var url: URL
+    /// Further places the same file can be fetched from, in the order they
+    /// should be tried after `url`.
+    ///
+    /// Every host here is somebody else's, and any of them can delete, retag or
+    /// unpublish what it serves without telling us. An install that already has
+    /// the weights on disk would never notice; a fresh one would be unusable
+    /// with nothing to do about it but ship a new build. A second source is the
+    /// cheapest possible insurance against that, and it cannot weaken anything:
+    /// `sha256` and `bytes` stay properties of the *file*, so a source that
+    /// serves different bytes has its download rejected exactly as a corrupted
+    /// one does.
+    ///
+    /// Optional so that an entry without it decodes — the field is new, the
+    /// manifest is bundled beside the code that reads it, and a future entry
+    /// that has only one place to go should not have to say so.
+    var mirrors: [URL]?
     var sha256: String
     var bytes: Int64
     var required: Bool
@@ -49,6 +74,16 @@ struct ModelDescriptor: Codable, Identifiable, Sendable {
     var license: String
 
     var modelID: ModelID? { ModelID(rawValue: id) }
+
+    /// Everywhere these bytes can be fetched from, primary first.
+    ///
+    /// De-duplicated, because a manifest that repeated the primary among its
+    /// mirrors would otherwise spend a whole failed attempt on the same dead
+    /// host twice and report the fallback as having been tried.
+    var sources: [URL] {
+        var seen: Set<URL> = []
+        return ([url] + (mirrors ?? [])).filter { seen.insert($0).inserted }
+    }
 
     /// The first 16 hex characters — 64 bits — of the manifest digest.
     ///
@@ -80,6 +115,12 @@ struct ModelDescriptor: Codable, Identifiable, Sendable {
     /// against a different URL, which would splice the head of one model onto
     /// the tail of another and produce a file that only the checksum could
     /// catch — after the whole download had been paid for.
+    ///
+    /// Now that a model has more than one `sources` entry, the same hazard
+    /// exists one level down and the digest cannot answer it: two sources of
+    /// the *same* weights share this key by design. `Downloader` files resume
+    /// payloads under the key **and** the source that produced them, so a
+    /// partial can only ever continue the transfer it came from.
     var downloadKey: String { "\(id)-\(digestPrefix)" }
 
     /// What the user is shown. Never `id`: that is the weight file's own name,
@@ -99,6 +140,74 @@ struct ModelManifest: Codable, Sendable {
     var manifestVersion: Int
     var release: String
     var models: [ModelDescriptor]
+}
+
+/// Everything a compiled graph depends on that ORT's own cache key leaves out.
+///
+/// ORT decides to reuse a compiled Core ML artifact by existence alone: its key
+/// covers the graph, the partition ordinal and the execution-provider options
+/// that appear in the cache path, and contains neither the OS version nor its
+/// own. So a system update that invalidates artifacts an older Core ML wrote
+/// leaves ORT confidently handing them back, `MLModel` refusing them, and the
+/// same load failing on every launch forever — there is nothing in the cache
+/// that anybody re-checks. Recording these here is what makes that self-correct
+/// after one recompile rather than never.
+///
+/// The three EP fields are the ones that *do* appear in the cache path, and they
+/// are here so that a wipe caused by anything else re-records them truthfully
+/// rather than leaving a record that describes a different configuration.
+struct CompileFingerprint: Codable, Equatable, Sendable {
+    var osVersion: String
+    var device: String
+    var appBuild: String
+    var runtimeVersion: String
+    var computeUnits: String
+    var modelFormat: String
+    var staticInputShapes: Bool
+
+    /// - Parameter tuning: only `modelFormat` and `requireStaticInputShapes`
+    ///   are read. The replica count and the thread count change what the
+    ///   session does, not what Core ML compiles, and including them would
+    ///   throw the cache away when a phone crossed the memory-constrained
+    ///   threshold for a graph that is byte-identical.
+    static func current(compute: ComputePolicy, tuning: EngineTuning) -> CompileFingerprint {
+        let system = ProcessInfo.processInfo.operatingSystemVersion
+        return CompileFingerprint(
+            osVersion: "\(system.majorVersion).\(system.minorVersion).\(system.patchVersion)",
+            device: DeviceCapabilities.deviceModelIdentifier,
+            appBuild: Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "unknown",
+            runtimeVersion: ORTVersion() ?? "unknown",
+            computeUnits: compute.mlComputeUnits,
+            modelFormat: tuning.modelFormat,
+            staticInputShapes: tuning.requireStaticInputShapes)
+    }
+}
+
+/// The on-disk shape of `CompiledFrom.json` as this build writes it.
+///
+/// Every build up to 1.6.1 wrote a bare JSON array of file names here, and those
+/// installs are the ones this whole change exists for — so the array is still a
+/// format the reader accepts; see `CompiledFromState`. A build older than this
+/// one reading *this* record fails to decode its `[String]`, reads that as "no
+/// record at all", and clears the cache once. A downgrade costing one recompile
+/// is the right way round for this trade.
+private struct CompiledFromRecord: Codable {
+    var models: [String]
+    var fingerprint: CompileFingerprint
+}
+
+/// What was found in `CompiledFrom.json`, which is three different situations
+/// and not two.
+private enum CompiledFromState {
+    /// Nothing has ever been recorded, or what is there cannot be read. Whatever
+    /// sits in the cache directory was put there by something that left no
+    /// account of it.
+    case never
+    /// The plain array of names an older build wrote. The names are as
+    /// trustworthy as they ever were; what those graphs were compiled *against*
+    /// is simply not known, and unknown has to count as a mismatch — once.
+    case unfingerprinted(Set<String>)
+    case recorded(names: Set<String>, fingerprint: CompileFingerprint)
 }
 
 enum ModelInstallState: Equatable, Sendable {
@@ -185,15 +294,50 @@ final class ModelManager {
         containerDirectory.appendingPathComponent("CoreMLCompiled", isDirectory: true)
     }
 
-    /// The list of model files the compiled graphs were last reconciled
-    /// against. Kept beside the two directories rather than inside either, so
-    /// neither the sweep nor a cache wipe has to know about it.
+    /// What the compiled graphs were last reconciled against: the model files,
+    /// and the machine and settings they were compiled for. Kept beside the two
+    /// directories rather than inside either, so neither the sweep nor a cache
+    /// wipe has to know about it.
     nonisolated static var compiledFromFile: URL {
         containerDirectory.appendingPathComponent("CompiledFrom.json")
     }
 
+    /// Exists only while a preparation is compiling into the cache directory,
+    /// and holds the entry names that were already there when it began.
+    ///
+    /// Core ML's compiled artifact is a directory tree that ORT copies into
+    /// place item by item, with no torn-state detection and no integrity check
+    /// on the way back out — it reuses whatever is there by existence alone. So
+    /// a process killed part-way through a compile leaves an artifact that looks
+    /// finished, is not, and is handed to `MLModel` on every launch from then
+    /// on. This file is the only evidence anyone has that the copy was
+    /// interrupted: written before the compile, deleted after it, and read by
+    /// `reconcileCompileCache` on the next launch.
+    ///
+    /// It carries the list rather than being empty because being killed during
+    /// a preparation is ordinary, not exceptional — a swipe away, an incoming
+    /// call, jetsam during half a gigabyte of weights — and it happens around
+    /// every preparation, not only the ones that compile. Treating that as
+    /// "throw the directory away" would charge a full recompile for a launch
+    /// the user simply left, and on a device slow enough to be interrupted
+    /// twice the compile would never finish at all.
+    nonisolated static var compileMarkerFile: URL {
+        containerDirectory.appendingPathComponent("CompileInProgress")
+    }
+
     func location(of descriptor: ModelDescriptor) -> URL {
         Self.modelsDirectory.appendingPathComponent(descriptor.fileName)
+    }
+
+    /// What the *shipping* configuration will compile against.
+    ///
+    /// The compute policy is the user's; the two EP options are the defaults
+    /// `AppModel` prepares with, which is the configuration whose artifacts have
+    /// to be there on an ordinary launch. The benchmark's variants compile
+    /// alongside them under their own cache keys and are not described here on
+    /// purpose — see `EngineBenchmark`.
+    private var currentCompileFingerprint: CompileFingerprint {
+        CompileFingerprint.current(compute: Preferences.shared.compute, tuning: EngineTuning())
     }
 
     // MARK: - Loading
@@ -298,13 +442,17 @@ final class ModelManager {
         Task { [weak self] in
             guard let self else { return }
             let protected = await self.protectedPartialNames()
+            // Taken here rather than inside the detached task: the compute
+            // policy lives in `Preferences`, which is main-actor bound.
+            let fingerprint = self.currentCompileFingerprint
 
             // Hashing a 900 MB library is seconds of `read`, and the actor this
             // object lives on is the one drawing the screen — so all of it goes
             // to a detached task and only the verdicts cross back.
             let outcome = await Task.detached(priority: .utility) {
                 Self.reconcileLibrary(descriptors: descriptors,
-                                      protectedPartials: protected)
+                                      protectedPartials: protected,
+                                      fingerprint: fingerprint)
             }.value
 
             // Every verdict lands in one step, and `isPreparingLibrary` drops
@@ -343,7 +491,8 @@ final class ModelManager {
     /// nothing at all.
     nonisolated private static func reconcileLibrary(
         descriptors: [ModelDescriptor],
-        protectedPartials: Set<String>)
+        protectedPartials: Set<String>,
+        fingerprint: CompileFingerprint)
     -> (verdicts: [String: ModelInstallState], preserved: Set<String>) {
 
         var verdicts: [String: ModelInstallState] = [:]
@@ -373,7 +522,10 @@ final class ModelManager {
                 "deferred the model sweep: \(outstanding.count) required model(s) still missing")
         }
 
-        reconcileCompileCache()
+        // Last, and still before anything is allowed to load: the engine waits
+        // on `isReadyToLoad`, which the caller only satisfies once this whole
+        // function has returned.
+        reconcileCompileCache(fingerprint: fingerprint)
         return (verdicts, preserved)
     }
 
@@ -516,40 +668,220 @@ final class ModelManager {
     /// the last reconcile and is gone now means whatever was compiled from it
     /// is dead weight, and since the entries cannot be told apart the cache goes
     /// wholesale. Names that only *appear* change nothing — a new model simply
-    /// compiles and adds an entry — so they do not trigger a wipe.
-    nonisolated private static func reconcileCompileCache() {
+    /// compiles and adds an entry — so they do not trigger a wipe. That subset
+    /// rule is deliberate and stays: turning it into equality would recompile
+    /// the whole library every time somebody downloads an optional model.
+    ///
+    /// The names were the only thing recorded, and they are the only thing that
+    /// can never explain the failure this now also answers for: a graph the
+    /// device or the system can no longer load. `CompileFingerprint` covers
+    /// that, and unlike the names it is compared for equality — see
+    /// `staleReason`.
+    ///
+    /// - Parameter fingerprint: built on the main actor by the caller, because
+    ///   the compute policy lives in `Preferences`.
+    nonisolated private static func reconcileCompileCache(fingerprint: CompileFingerprint) {
+        let present = presentModelFileNames()
+        // First, and separately from the record: an interrupted compile is a
+        // statement about the handful of entries it was writing, while
+        // everything the record can say is a statement about all of them.
+        discardInterruptedCompileEntries()
+        clearCompileCache(reason: staleReason(present: present, fingerprint: fingerprint),
+                          recording: present,
+                          fingerprint: fingerprint)
+        // The marker is this pass's to clear. Nothing may prepare the engine
+        // until the launch pass has finished — `loadableModels` is nil while
+        // `isPreparingLibrary` is true, and both `AppModel.startEngineIfPossible`
+        // and the benchmark go through it — so a marker seen here can only have
+        // been left behind by a process that is no longer running.
+        markCompileFinished()
+    }
+
+    /// Why the compiled graphs cannot be trusted, or `nil` when they can.
+    ///
+    /// An interrupted compile is not one of the reasons: it condemns the
+    /// entries it was writing rather than all of them, and
+    /// `discardInterruptedCompileEntries` has already removed exactly those.
+    nonisolated private static func staleReason(present: Set<String>,
+                                                fingerprint: CompileFingerprint) -> String? {
+        switch compiledFrom() {
+        case .never:
+            // No record at all is the update to the digest-named scheme itself:
+            // whatever is in there was compiled by a build that named its models
+            // the old way, and the adoption pass has just renamed every one of
+            // them. A record of *nothing* is different — that is a library that
+            // has never compiled anything — so the two must not be collapsed,
+            // which is why this is an enum rather than an optional set.
+            return "the models they were built from are gone"
+        case .unfingerprinted(let names):
+            guard names.isSubset(of: present) else { return "the models they were built from are gone" }
+            return "what they were compiled against was never recorded"
+        case .recorded(let names, let recorded):
+            guard names.isSubset(of: present) else { return "the models they were built from are gone" }
+            guard recorded != fingerprint else { return nil }
+            // Deliberately blunt about which field moved: the OS, the device,
+            // the app build and the three EP options are all reasons the
+            // artifacts on disk may no longer be loadable, and none of them is
+            // worth a different branch here.
+            return "the system, the device or the settings they were compiled for have changed"
+        }
+    }
+
+    /// Empties the cache directory when `reason` says it must, and records what
+    /// the next compile will be building against either way.
+    ///
+    /// Recording unconditionally is what closes the window the old code left
+    /// open: a wipe that happens without the record being rewritten is a wipe
+    /// that happens again on the next launch.
+    nonisolated private static func clearCompileCache(reason: String?,
+                                                      recording present: Set<String>,
+                                                      fingerprint: CompileFingerprint) {
         let fileManager = FileManager.default
-        let present = Set(((try? fileManager.contentsOfDirectory(atPath: modelsDirectory.path)) ?? [])
-            .filter { $0.hasSuffix(".onnx") })
-
-        // No record at all is the update to this scheme itself: whatever is in
-        // there was compiled by a build that named its models the old way, and
-        // the adoption pass has just renamed every one of them. A record of
-        // *nothing* is different — that is a library that has never compiled
-        // anything — so the two cases must not be collapsed.
-        let entries = (try? fileManager.contentsOfDirectory(atPath: compileCacheDirectory.path)) ?? []
-        let stale = compiledFromNames().map { !$0.isSubset(of: present) } ?? !entries.isEmpty
-
-        if stale {
+        // An empty directory has nothing to throw away, and saying so in the log
+        // would be a line about work that did not happen.
+        if let reason, !compileCacheEntryNames().isEmpty {
             try? fileManager.removeItem(at: compileCacheDirectory)
             try? fileManager.createDirectory(at: compileCacheDirectory,
                                              withIntermediateDirectories: true)
             EngineLog.models.notice(
-                "cleared the compiled graph cache: the models it was built from are gone")
+                "cleared the compiled graph cache: \(reason, privacy: .public)")
         }
-        recordCompiledFrom(present)
+        recordCompiledFrom(present, fingerprint: fingerprint)
     }
 
-    /// The recorded file names, or `nil` when nothing has ever been recorded.
-    nonisolated private static func compiledFromNames() -> Set<String>? {
-        guard let data = try? Data(contentsOf: compiledFromFile),
-              let names = try? JSONDecoder().decode([String].self, from: data) else { return nil }
-        return Set(names)
+    nonisolated private static func presentModelFileNames() -> Set<String> {
+        Set(((try? FileManager.default.contentsOfDirectory(atPath: modelsDirectory.path)) ?? [])
+            .filter { $0.hasSuffix(".onnx") })
     }
 
-    nonisolated private static func recordCompiledFrom(_ names: Set<String>) {
-        guard let data = try? JSONEncoder().encode(names.sorted()) else { return }
+    /// Reads the record in whichever of the two formats it is in.
+    ///
+    /// The bare `[String]` is what every shipped build wrote, and it is sitting
+    /// on the device of everyone this change is for. Decoding has to *accept* it
+    /// — throwing, or silently reading it as "never recorded", would either
+    /// break the launch pass or lose the names it does carry — and then treat
+    /// its missing fingerprint as a mismatch, which wipes once and records the
+    /// new format. Every launch after that is a plain fingerprint comparison.
+    nonisolated private static func compiledFrom() -> CompiledFromState {
+        guard let data = try? Data(contentsOf: compiledFromFile) else { return .never }
+        let decoder = JSONDecoder()
+        if let record = try? decoder.decode(CompiledFromRecord.self, from: data) {
+            return .recorded(names: Set(record.models), fingerprint: record.fingerprint)
+        }
+        if let names = try? decoder.decode([String].self, from: data) {
+            return .unfingerprinted(Set(names))
+        }
+        // A record that cannot be read says nothing about what was compiled, and
+        // the safe direction is the one that costs a recompile rather than the
+        // one that hands back graphs nothing can vouch for.
+        return .never
+    }
+
+    nonisolated private static func recordCompiledFrom(_ names: Set<String>,
+                                                       fingerprint: CompileFingerprint) {
+        let record = CompiledFromRecord(models: names.sorted(), fingerprint: fingerprint)
+        guard let data = try? JSONEncoder().encode(record) else { return }
         try? data.write(to: compiledFromFile, options: .atomic)
+    }
+
+    // MARK: - The compile marker
+
+    /// Called by the engine on the barrier, either side of every preparation.
+    ///
+    /// Both are `nonisolated` and take no arguments so the engine can hold them
+    /// as plain closures and know nothing about the library that owns the
+    /// directory it compiles into.
+    nonisolated static func markCompileStarted() {
+        // What was already in there, not merely the fact that something is
+        // compiling. ORT adds an entry or reuses one whole — it never rewrites
+        // a directory it has decided to hand back — so anything that appears
+        // after this line and is still there at the next launch is exactly what
+        // the interrupted copy left behind, and every entry named here is a
+        // graph that was complete before it started.
+        guard let data = try? JSONEncoder().encode(compileCacheEntryNames().sorted()) else {
+            // A marker with no list still says a compile was in flight, and the
+            // reader takes that as "every entry is suspect". Losing whole
+            // graphs is the right way to fail here; keeping a torn one is not.
+            FileManager.default.createFile(atPath: compileMarkerFile.path, contents: nil)
+            return
+        }
+        try? data.write(to: compileMarkerFile, options: .atomic)
+    }
+
+    nonisolated static func markCompileFinished() {
+        try? FileManager.default.removeItem(at: compileMarkerFile)
+    }
+
+    /// Throws away whatever a compile that never finished added to the cache,
+    /// and only that.
+    ///
+    /// The entries the marker names were complete before it started and are not
+    /// suspects; the difference is the set that was being copied when the
+    /// process went away, which is the set `MLModel` would otherwise be handed
+    /// on every launch from now on. A marker that cannot be read names nothing,
+    /// so everything present is suspect and the whole directory goes — the
+    /// blunt behaviour, kept for the case where there is genuinely nothing to
+    /// reason from.
+    nonisolated private static func discardInterruptedCompileEntries() {
+        guard let data = try? Data(contentsOf: compileMarkerFile) else { return }
+        let complete = (try? JSONDecoder().decode([String].self, from: data)).map(Set.init) ?? []
+        let suspect = compileCacheEntryNames().subtracting(complete)
+        guard !suspect.isEmpty else { return }
+        for name in suspect {
+            try? FileManager.default.removeItem(
+                at: compileCacheDirectory.appendingPathComponent(name))
+        }
+        EngineLog.models.notice(
+            "discarded \(suspect.count) compiled graph(s) left by a compile that did not finish")
+    }
+
+    nonisolated private static func compileCacheEntryNames() -> Set<String> {
+        Set((try? FileManager.default.contentsOfDirectory(atPath: compileCacheDirectory.path)) ?? [])
+    }
+
+    // MARK: - Verification after a failure
+
+    /// Re-hashes what is installed and deletes anything whose bytes no longer
+    /// match the manifest, returning the ids it deleted.
+    ///
+    /// This is the expensive thing the launch pass is careful never to do —
+    /// seconds of `read` over ~900 MB — and it is justified here and nowhere
+    /// else: the engine calls it only after a preparation has failed, had the
+    /// compiled graphs thrown away, and failed again. At that point the cheap
+    /// name-and-size check has clearly answered wrongly about something, and the
+    /// alternative to finding out which file is asking the user to re-download
+    /// the whole library.
+    ///
+    /// Only mismatching files go, so the worst case is one model's download
+    /// rather than all six. A file that could not be *read* is left where it is:
+    /// a disk that would not answer is not evidence about the weights, and
+    /// deleting on that guess charges the user a download to correct it.
+    nonisolated static func verifyInstalledModels() -> [String] {
+        guard let url = Bundle.main.url(forResource: "models", withExtension: "json"),
+              let data = try? Data(contentsOf: url),
+              let manifest = try? JSONDecoder().decode(ModelManifest.self, from: data) else {
+            EngineLog.models.error("could not read the manifest to verify the installed models")
+            return []
+        }
+
+        var discarded: [String] = []
+        for descriptor in manifest.models {
+            let file = modelsDirectory.appendingPathComponent(descriptor.fileName)
+            // Nothing there is nothing to check; the download path already
+            // treats it as missing.
+            guard fileSize(at: file) != nil else { continue }
+            guard let digest = try? sha256(of: file) else {
+                EngineLog.models.error(
+                    "could not read \(descriptor.id, privacy: .public) to verify it; left in place")
+                continue
+            }
+            guard digest != descriptor.sha256.lowercased() else { continue }
+            try? FileManager.default.removeItem(at: file)
+            discarded.append(descriptor.id)
+            EngineLog.models.error(
+                "discarded \(descriptor.id, privacy: .public): its bytes no longer match the manifest")
+        }
+        return discarded
     }
 
     /// Size in bytes, or `nil` when there is no file there at all — a
@@ -762,6 +1094,18 @@ final class ModelManager {
         // sparing a file that no longer exists.
         preservedLegacy.remove(descriptor.legacyFileName)
         states[descriptor.id] = .missing
+
+        // The record has just stopped describing the disk, and leaving it that
+        // way does not save the recompile — it only moves it. The next launch
+        // would find a recorded name that is no longer present, clear the whole
+        // cache and rebuild every graph, in the seconds before the studio
+        // appears and for no reason the user could connect to anything they did.
+        // Doing it here spends the same work under the button that caused it,
+        // with the engine already unloaded by the caller — which is also the
+        // only moment it is safe to delete a graph a session may have mapped.
+        Self.clearCompileCache(reason: "a model was removed",
+                               recording: Self.presentModelFileNames(),
+                               fingerprint: currentCompileFingerprint)
         EngineLog.models.notice("removed \(descriptor.id, privacy: .public)")
     }
 
@@ -784,7 +1128,7 @@ final class ModelManager {
             try? fileManager.removeItem(at: directory)
             try? fileManager.createDirectory(at: directory, withIntermediateDirectories: true)
         }
-        Self.recordCompiledFrom([])
+        Self.recordCompiledFrom([], fingerprint: currentCompileFingerprint)
         // Nothing is being kept for a later adoption attempt now that the user
         // has asked for all of it gone, and a name left here would have the next
         // sweep sparing a file that no longer exists.
@@ -814,7 +1158,7 @@ final class ModelManager {
         defer { inFlightPartials.remove(descriptor.partialFileName) }
 
         try await downloader.download(key: descriptor.downloadKey,
-                                      from: descriptor.url,
+                                      from: descriptor.sources,
                                       to: staged) { [weak self] written, _ in
             // URLSession calls this from its own queue.
             Task { @MainActor [weak self] in
@@ -827,6 +1171,13 @@ final class ModelManager {
 
         // Verify before installing. A mismatch means a corrupted or substituted
         // file, and installing it would hand unverified weights to the engine.
+        //
+        // Deliberately outside the source loop in `Downloader`: a complete
+        // download that hashes wrong is the one failure that must *not* send us
+        // to another host. Every source is asserted to serve these exact bytes,
+        // so wrong bytes are evidence about the file rather than about the
+        // host, and quietly asking somewhere else would turn an integrity
+        // failure into a retry loop that hides it.
         states[descriptor.id] = .verifying
         let path = staged
         let digest = try await Task.detached(priority: .userInitiated) {

@@ -419,9 +419,31 @@ final class SwapPipeline {
             guard let path = config.modelPaths[id] else {
                 throw makeEngineNSError(.modelMissing, underlying: "no path for \(id.rawValue)")
             }
-            try runtime.load(id, path: path, compute: config.compute,
-                             cacheDirectory: config.modelCacheDirectory,
-                             tuning: config.tuning)
+            do {
+                try runtime.load(id, path: path, compute: config.compute,
+                                 cacheDirectory: config.modelCacheDirectory,
+                                 tuning: config.tuning)
+            } catch {
+                // Which one. The failure that reaches a user says only that a
+                // model could not be loaded — it must, because no surface a user
+                // reads names a model — and support has had to work backwards
+                // from that sentence with nothing else to go on. The id belongs
+                // in the log and in `NSDebugDescriptionErrorKey`, which are the
+                // two places it is a diagnostic rather than a disclosure.
+                //
+                // The code is carried over rather than replaced: a missing file
+                // and an unloadable one are different sentences on screen, and
+                // flattening both to `.modelLoadFailed` would tell a user whose
+                // file has gone that it is incomplete.
+                let nsError = error as NSError
+                let code = (nsError.domain == engineErrorDomain
+                            ? EngineError(rawValue: nsError.code) : nil) ?? .modelLoadFailed
+                let detail = nsError.userInfo[NSDebugDescriptionErrorKey] as? String
+                    ?? nsError.localizedDescription
+                EngineLog.engine.error(
+                    "required model \(id.rawValue, privacy: .public) failed to load: \(detail, privacy: .public)")
+                throw makeEngineNSError(code, underlying: "\(id.rawValue): \(detail)")
+            }
         }
         for id in optional {
             guard let path = config.modelPaths[id],

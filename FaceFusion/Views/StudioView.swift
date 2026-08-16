@@ -36,6 +36,8 @@
 import SwiftUI
 import CoreTransferable
 import PhotosUI
+import StoreKit
+import UIKit
 import UniformTypeIdentifiers
 
 @MainActor
@@ -46,6 +48,7 @@ struct StudioView: View {
     @Environment(\.verticalSizeClass) private var verticalSizeClass
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Environment(\.presentSettings) private var presentSettings
+    @Environment(\.requestReview) private var requestReview
 
     @State private var isSavingToFiles = false
     @State private var isSavingToPhotos = false
@@ -58,6 +61,7 @@ struct StudioView: View {
     /// this screen, not about the app.
     @State private var saveNotice: String?
     @State private var showsPaywall = false
+    @State private var isSharing = false
 
     var body: some View {
         NavigationStack {
@@ -111,6 +115,15 @@ struct StudioView: View {
         .onChange(of: finishedURL) { saveNotice = nil }
         .sheet(isPresented: $showsPaywall) {
             PaywallView()
+        }
+        // The one place the review sheet is presented from, for both the save
+        // and the share. Tied to the token rather than to either success, so the
+        // decision stays in `ReviewPrompt` and this only carries the environment
+        // action across; tied to a `.task` so leaving the screen during the
+        // pause cancels the ask rather than firing it into a different context.
+        .task(id: model.reviewPromptToken) {
+            guard model.reviewPromptToken > 0 else { return }
+            await ReviewPrompt.present(requestReview)
         }
     }
 
@@ -902,11 +915,29 @@ struct StudioView: View {
         .buttonStyle(.bordered)
     }
 
+    /// The share sheet, presented by hand rather than through `ShareLink`.
+    ///
+    /// Same button, same words, same file. The difference is that `ShareLink`
+    /// hands the render to the system and never says what became of it, and a
+    /// review prompt after a share the user backed out of is precisely the ask
+    /// this app cannot afford to spend. `UIActivityViewController` reports which
+    /// way it went, so only a share that completed counts.
     private func shareButton(_ url: URL) -> some View {
-        ShareLink(item: url) {
+        Button {
+            isSharing = true
+        } label: {
             Label("Share", systemImage: "square.and.arrow.up")
         }
         .buttonStyle(.bordered)
+        .sheet(isPresented: $isSharing) {
+            ShareSheet(url: url) { shared in
+                // The activity controller dismisses itself, so the binding has
+                // to be brought back down by hand or the next tap presents
+                // nothing.
+                isSharing = false
+                if shared { model.noteSuccessfulSaveOrShare() }
+            }
+        }
     }
 
     private func failureBar(_ message: String) -> some View {
@@ -963,6 +994,29 @@ private struct ExportedFile: Transferable {
             SentTransferredFile(file.url)
         }
     }
+}
+
+/// `UIActivityViewController`, wrapped for the one thing `ShareLink` does not
+/// offer: being told whether the share actually happened.
+///
+/// `completed` comes back false for a sheet the user swiped away and for an
+/// activity they cancelled, and an activity that went wrong reports an error
+/// instead. All three mean nothing was shared, and are reported as such — the
+/// review prompt is worth spending only on a moment that went right.
+private struct ShareSheet: UIViewControllerRepresentable {
+    let url: URL
+    let onFinish: (Bool) -> Void
+
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        let controller = UIActivityViewController(activityItems: [url],
+                                                  applicationActivities: nil)
+        controller.completionWithItemsHandler = { _, completed, _, error in
+            onFinish(completed && error == nil)
+        }
+        return controller
+    }
+
+    func updateUIViewController(_ controller: UIActivityViewController, context: Context) {}
 }
 
 #Preview {

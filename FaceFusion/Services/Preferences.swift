@@ -143,6 +143,27 @@ final class Preferences {
         didSet { defaults.set(hasCompletedOnboarding, forKey: Key.hasCompletedOnboarding) }
     }
 
+    // MARK: - Asking for a review
+
+    /// How many saves and shares have genuinely succeeded, over the life of the
+    /// install. `ReviewPrompt` is the only thing that reads it.
+    ///
+    /// Kept here rather than in memory because the number it has to survive is
+    /// an app relaunch: someone who exports one video a week is exactly the user
+    /// worth asking, and a count that resets on quit would never reach them.
+    var successfulSaveCount: Int {
+        didSet { defaults.set(successfulSaveCount, forKey: Key.successfulSaveCount) }
+    }
+
+    /// The marketing version that last put the review prompt on screen, or an
+    /// empty string if none has.
+    ///
+    /// The version rather than a `Bool`, so an update re-arms the ask exactly
+    /// once instead of either never asking again or asking on every save.
+    var lastReviewPromptVersion: String {
+        didSet { defaults.set(lastReviewPromptVersion, forKey: Key.lastReviewPromptVersion) }
+    }
+
     // MARK: - Setup
 
     init(defaults: UserDefaults = .standard) {
@@ -162,7 +183,9 @@ final class Preferences {
             Key.matchDistance: defaultFaceMatchDistance,
             Key.useHEVC: true,
             Key.savesToPhotos: true,
-            Key.hasCompletedOnboarding: false
+            Key.hasCompletedOnboarding: false,
+            Key.successfulSaveCount: 0,
+            Key.lastReviewPromptVersion: ""
         ])
 
         // A stored raw value can be from a build that spelled the case
@@ -182,6 +205,15 @@ final class Preferences {
         savesToPhotos = defaults.bool(forKey: Key.savesToPhotos)
 
         hasCompletedOnboarding = defaults.bool(forKey: Key.hasCompletedOnboarding)
+
+        // Both keys are new in this version, so on a device upgrading from an
+        // older build they are absent and the registered defaults answer: no
+        // saves counted yet, and no version has asked. That is the same state a
+        // fresh install starts in, which is the intent — an existing user gets
+        // the first ask after their next three successful saves, not on the
+        // first one because a missing key read as zero by accident.
+        successfulSaveCount = defaults.integer(forKey: Key.successfulSaveCount)
+        lastReviewPromptVersion = defaults.string(forKey: Key.lastReviewPromptVersion) ?? ""
 
         // `didSet` does not run during initialisation, so the stored choice has
         // to be pushed into the bundle override by hand. Doing it here rather
@@ -203,5 +235,7 @@ final class Preferences {
         static let useHEVC = "output.useHEVC"
         static let savesToPhotos = "output.savesToPhotos"
         static let hasCompletedOnboarding = "onboarding.completed"
+        static let successfulSaveCount = "review.successfulSaveCount"
+        static let lastReviewPromptVersion = "review.lastPromptedVersion"
     }
 }

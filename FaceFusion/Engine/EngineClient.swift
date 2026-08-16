@@ -35,11 +35,45 @@ import os
 
 // MARK: - The engine
 
+/// What the engine is allowed to do to the on-disk library when a preparation
+/// fails, handed in rather than reached for.
+///
+/// The engine is given a cache directory to compile into and knows nothing about
+/// the library that owns it — which is right, and worth keeping right, because
+/// the same engine is driven by the app's normal start and by the benchmark.
+/// These three closures are the whole of the exception: two marks either side of
+/// a compile, and a verification pass that is only ever run after everything
+/// cheaper has already failed.
+struct EngineRecoveryHooks: Sendable {
+    var compileStarted: @Sendable () -> Void
+    var compileFinished: @Sendable () -> Void
+    /// Re-hashes the installed models, deletes the ones whose bytes no longer
+    /// match the manifest, and answers with their ids.
+    var verifyInstalledModels: @Sendable () -> [String]
+}
+
 /// In-process engine. Everything below the `async` surface is synchronous work
 /// on `queue`; nothing here touches the main actor.
 final class FaceFusionEngine: @unchecked Sendable {
 
     private let pipeline = SwapPipeline()
+
+    private let recovery: EngineRecoveryHooks
+
+    /// Whether the compiled-graph cache has already been thrown away and rebuilt
+    /// once for this engine — which is once per process, since the app builds
+    /// exactly one.
+    ///
+    /// The guard is not a nicety. A model file that genuinely cannot produce a
+    /// working session would otherwise wipe the cache, recompile every graph and
+    /// fail again on *every* launch, turning a bug that costs a re-download into
+    /// one that costs the battery. Read and written only from inside the barrier
+    /// block, so it needs no lock.
+    private var recoveredThisProcess = false
+
+    init(recovery: EngineRecoveryHooks) {
+        self.recovery = recovery
+    }
 
     /// Concurrent, with barriers for anything that mutates engine state.
     ///
@@ -59,7 +93,7 @@ final class FaceFusionEngine: @unchecked Sendable {
             "preparing with \(config.modelPaths.count) model(s), compute=\(config.compute.rawValue, privacy: .public)")
         do {
             let preparation = try await perform(barrier: true) {
-                try self.pipeline.prepare(config)
+                try self.prepareOrRecover(config)
             }
             EngineLog.engine.info(
                 "ready via \(preparation.executionProvider, privacy: .public) in \(preparation.warmupSeconds, format: .fixed(precision: 2))s")
@@ -68,6 +102,113 @@ final class FaceFusionEngine: @unchecked Sendable {
             EngineLog.engine.error(
                 "prepare failed: \(error.localizedDescription, privacy: .public) [\(String(describing: error), privacy: .public)]")
             throw error
+        }
+    }
+
+    /// Prepares, and repairs itself if that fails.
+    ///
+    /// Everything here is inside one barrier block, and that is the point rather
+    /// than an implementation detail. No session is live while the compiled
+    /// graphs are deleted, no frame is part-way through reading a graph that is
+    /// about to stop existing, and no second `prepare` can slip between the two
+    /// attempts and rebuild sessions against a directory this one is emptying.
+    /// Doing the same thing from a caller would give up all three, and there are
+    /// two callers — the app's normal start and the benchmark — so it would have
+    /// to be done twice and stay right in both.
+    ///
+    /// The repair is deliberately indifferent to *why* the preparation failed.
+    /// ORT reuses a compiled Core ML artifact by existence alone: no integrity
+    /// check, no OS version and no runtime version in the cache key, and a
+    /// non-atomic directory copy to produce it. A system update that invalidated
+    /// what an older Core ML wrote, an artifact torn by a process kill and a
+    /// half-written file all present as the same thing — a load that throws on
+    /// every launch, for good, while Settings reports a complete and healthy
+    /// library. Throwing the derived state away and building it again answers
+    /// all of them, and nothing in the app did it before.
+    private func prepareOrRecover(_ config: EngineConfiguration) throws -> EnginePreparation {
+        // Bracketed around both attempts, and around the failure path too: what
+        // this marks is "graphs may be half-written in that directory", which is
+        // true from the first session until the last one is built or given up
+        // on. `defer` rather than a matched call per exit, because the one exit
+        // that must not miss it is the one that throws.
+        recovery.compileStarted()
+        defer { recovery.compileFinished() }
+
+        do {
+            return try pipeline.prepare(config)
+        } catch {
+            // The original text, kept whole: it is the only description of what
+            // actually went wrong, and the second attempt either replaces it
+            // with a success or with a different error.
+            let original = error.localizedDescription
+            let originalDetail = String(describing: error)
+
+            guard !recoveredThisProcess else {
+                EngineLog.engine.error(
+                    "prepare failed and the compiled graph cache has already been rebuilt this run; not trying again: \(original, privacy: .public) [\(originalDetail, privacy: .public)]")
+                throw error
+            }
+            recoveredThisProcess = true
+
+            EngineLog.engine.error(
+                "prepare failed, rebuilding the compiled graph cache and retrying once: \(original, privacy: .public) [\(originalDetail, privacy: .public)]")
+
+            // Everything the pipeline holds, not just what failed: a partly
+            // built set of sessions has some graphs mapped out of the directory
+            // that is about to go, and the retry has to start from nothing
+            // anyway.
+            pipeline.unloadAll()
+            Self.emptyCompileCache(at: config.modelCacheDirectory)
+
+            do {
+                let preparation = try pipeline.prepare(config)
+                EngineLog.engine.notice(
+                    "recovered: prepare succeeded after the compiled graph cache was rebuilt (first attempt: \(original, privacy: .public))")
+                return preparation
+            } catch {
+                // Second stage, and the only moment the cost is justified: the
+                // graphs were not the problem, so the files they are compiled
+                // from are the next suspect. Re-hashing 900 MB is seconds of
+                // `read` — unthinkable on every launch, cheap against a library
+                // the user would otherwise be told to remove and fetch again in
+                // full. Only what fails to verify is deleted, so the ordinary
+                // download path re-fetches one model rather than six.
+                pipeline.unloadAll()
+                let discarded = recovery.verifyInstalledModels()
+                EngineLog.engine.error(
+                    """
+                    prepare failed again after rebuilding the compiled graph cache: \
+                    \(error.localizedDescription, privacy: .public) \
+                    [\(String(describing: error), privacy: .public)] \
+                    (first attempt: \(original, privacy: .public)); \
+                    model files discarded as corrupt: \
+                    \(discarded.isEmpty ? "none" : discarded.joined(separator: ","), privacy: .public)
+                    """)
+                throw error
+            }
+        }
+    }
+
+    /// Deletes the compiled-graph directory and puts an empty one back.
+    ///
+    /// Recreated rather than left for `SwapPipeline.prepare` to make: the
+    /// directory being absent and the directory being empty are the same thing
+    /// to ORT, but not to a reader of the file system, and a cache directory
+    /// that briefly does not exist is exactly the state the app is careful to
+    /// avoid everywhere else.
+    private static func emptyCompileCache(at path: String) {
+        let fileManager = FileManager.default
+        let directory = URL(fileURLWithPath: path, isDirectory: true)
+        // A directory that is not there is a failure only in `removeItem`'s
+        // sense of the word — it is the state this is trying to reach.
+        try? fileManager.removeItem(at: directory)
+        do {
+            try fileManager.createDirectory(at: directory, withIntermediateDirectories: true)
+            EngineLog.engine.notice(
+                "emptied the compiled graph cache before retrying")
+        } catch {
+            EngineLog.engine.error(
+                "could not empty the compiled graph cache: \(error.localizedDescription, privacy: .public)")
         }
     }
 
@@ -272,7 +413,28 @@ final class EngineClient {
 
     private(set) var state: State = .idle
 
-    private let engine = FaceFusionEngine()
+    /// The library's side of the recovery is bound here, at the one place that
+    /// owns both: `ModelManager`'s statics know where the record and the model
+    /// files are, and the engine only knows the directory it was handed.
+    private let engine = FaceFusionEngine(recovery: EngineRecoveryHooks(
+        compileStarted: ModelManager.markCompileStarted,
+        compileFinished: ModelManager.markCompileFinished,
+        verifyInstalledModels: ModelManager.verifyInstalledModels))
+
+    /// Which models the running sessions were actually built from, or `nil`
+    /// while there are no sessions.
+    ///
+    /// The set and the library's set are not the same question. An optional
+    /// model that fails to load is skipped and logged — the pipeline runs
+    /// without it rather than failing the launch — so the file can be installed
+    /// and the stage silently absent, which is a face that never gets enhanced
+    /// and a toggle that does nothing. `nil` rather than an empty set while the
+    /// engine is idle or preparing, so a caller can tell "not loaded" from
+    /// "nothing is loaded yet" and say the second thing instead of the first.
+    var loadedModels: Set<ModelID>? {
+        guard case .ready(let summary) = state else { return nil }
+        return Set(summary.loadedModels.compactMap(ModelID.init(rawValue:)))
+    }
 
     // MARK: Lifecycle
 

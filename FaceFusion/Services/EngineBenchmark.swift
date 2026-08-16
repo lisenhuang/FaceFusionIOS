@@ -196,6 +196,28 @@ final class EngineBenchmark {
         for (index, configuration) in Self.sweep.enumerated() {
             if isCancelled || Task.isCancelled { break }
             do {
+                // Into the shipping cache directory, and each row leaves its own
+                // set of compiled graphs behind in it. The execution-provider
+                // options are part of ORT's cache key, so the seven variants do
+                // not collide and do not overwrite the ones an ordinary launch
+                // uses — but a directory that holds one set before a measurement
+                // holds several afterwards, which is hundreds of megabytes of
+                // graphs nothing will ask for again unless the user re-measures.
+                //
+                // They are not swept here, deliberately: the entries cannot be
+                // mapped back to a configuration, so removing the sweep's would
+                // mean removing everything, including the set the engine is about
+                // to be restarted on. `reconcileCompileCache` collects them on a
+                // later launch instead — the fingerprint it records describes the
+                // shipping configuration alone, so a sweep that ends by adopting
+                // a different compute policy is a mismatch at the next launch and
+                // the whole directory goes, at the cost of one recompile.
+                //
+                // This is also the second caller of `prepare`, and the reason the
+                // self-healing retry lives in the engine rather than in
+                // `AppModel`: a compiled graph that has gone bad breaks a
+                // measurement exactly as it breaks a launch, and neither caller
+                // should have to know how to repair it.
                 try await model.engine.prepare(modelPaths: model.models.installedPaths(),
                                                cacheDirectory: ModelManager.compileCacheDirectory,
                                                compute: configuration.compute,

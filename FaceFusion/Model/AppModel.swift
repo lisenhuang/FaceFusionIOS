@@ -268,6 +268,15 @@ final class AppModel {
     private(set) var isSavingToPhotos = false
     private(set) var finishedIsInPhotos = false
 
+    /// Rises when a save or a share succeeded *and* `ReviewPrompt` decided this
+    /// is a moment worth asking about the app at.
+    ///
+    /// A counter rather than a flag, and watched rather than acted on, because
+    /// the review sheet is presented through SwiftUI's environment and a model
+    /// object has no environment to reach it from. The rules stay in
+    /// `ReviewPrompt`; this is only how the answer crosses into the view.
+    private(set) var reviewPromptToken = 0
+
     private var exportTask: Task<Void, Never>?
     private var previewFrameTask: Task<Void, Never>?
     private var previewSwapTask: Task<Void, Never>?
@@ -454,6 +463,15 @@ final class AppModel {
         } catch {
             EngineLog.client.error("engine prepare failed: \(error.localizedDescription, privacy: .public)")
             statusMessage = error.localizedDescription
+            // A preparation that failed twice has already re-hashed the library
+            // and deleted anything whose bytes no longer matched the manifest,
+            // and the install states still say those files are there. Re-reading
+            // them is a `stat` per model, and it is the only thing that turns a
+            // file the engine just discarded into an offer to download it again
+            // — without it the app keeps insisting the library is complete while
+            // refusing to start, which is precisely the state users were stuck
+            // in.
+            models.refreshInstallStates()
         }
     }
 
@@ -1283,9 +1301,25 @@ final class AppModel {
             }
             finishedIsInPhotos = true
             statusMessage = String(localized: "Saved to your photo library.", bundle: .uiLanguage)
+            noteSuccessfulSaveOrShare()
         } catch {
             statusMessage = error.localizedDescription
         }
+    }
+
+    /// One save or one share that actually landed.
+    ///
+    /// The photo save above calls it itself; the share sheet calls it from the
+    /// view, because only the sheet's completion handler knows whether the user
+    /// went through with it. Every rule about what happens next belongs to
+    /// `ReviewPrompt` — this reports the fact and nothing more.
+    ///
+    /// Worth noticing rather than relying on: both callers already sit behind
+    /// the Pro check, so in practice only paying users are ever asked. That is a
+    /// happy accident of where saving lives, not a policy this enforces, and
+    /// nothing here should start depending on it.
+    func noteSuccessfulSaveOrShare() {
+        if ReviewPrompt.noteSuccess() { reviewPromptToken += 1 }
     }
 
     func cancelExport() {
