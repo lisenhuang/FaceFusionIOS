@@ -72,6 +72,35 @@ be one an existing install can *upgrade into*: the first launch after an update
 starts with whatever the previous version left on the device, and "works on a
 clean install" is not the bar.
 
+- **Never remove a product id from `StoreManager.productIDs`.** People have
+  paid for these — the subscriptions and the lifetime unlock alike — and that
+  array is not a list of what to sell. It is the entitlement allowlist:
+  `refreshEntitlements()` grants Pro only when a verified transaction's
+  `productID` appears in it. Delete an id and every customer holding that
+  product loses Pro at the next launch, silently. No error, no crash, and
+  nothing Restore Purchases can recover — the transaction is still valid and
+  the app has simply stopped recognising it. A subscriber is still being
+  charged for it. **Add to that array; never subtract from it.**
+
+  This holds when a product is *retired*, which is the case that tempts you.
+  Retiring is a dashboard action: **Remove from Sale** in App Store Connect
+  stops new purchases everywhere, including in builds already installed, and
+  leaves every existing owner entitled. `Product.products(for:)` quietly omits
+  an id the store will not sell, so the paywall stops offering it on its own
+  with no code change at all. Do not delete the product in App Store Connect
+  either — removal from sale is reversible and deletion is not, and the id is
+  still doing entitlement work for the people who bought it.
+
+  The same three ids are declared in the `Mac` repository and gate the same
+  purchases: the two apps share a bundle identifier and an App Store record, so
+  one Apple ID purchase unlocks both. The arrays have to stay in step, and
+  dropping an id from one repository revokes Pro on that platform while leaving
+  it working on the other — harder to notice than doing it in both.
+
+  `README.md` covers the rest of the shape this constraint takes, including why
+  the paywall and the entitlement gate read from two different places and what
+  that means for adding a plan.
+
 - **`UserDefaults` written by an older build.** Register new preferences with
   `register(defaults:)` and read them through that, so an absent key reads as
   the intended default rather than `false` or `0`. Never change what an existing
