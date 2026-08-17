@@ -96,9 +96,23 @@ that has never run the app before.
 
 ## Privacy is a hard constraint, not a goal
 
-The only network request this app makes is the model download in `Downloader`.
-No analytics, no telemetry, no crash reporting service, no "anonymous" anything.
-If a change adds a `URLSession` anywhere else, it is wrong.
+This app makes two kinds of network request and no others:
+
+1. **The model download**, in `Downloader`.
+2. **The App Store version lookup**, in `UpdateChecker` — the launch check and
+   the Check for Updates button in Settings share one `URLSession`. It sends
+   the app's own store id and receives a version number. No device identifier,
+   no install identifier, no usage, no media, and no request body for any of
+   that to travel in.
+
+No analytics, no telemetry, no crash reporting service, no "anonymous"
+anything. If a change adds a `URLSession` outside those two, it is wrong.
+
+Three documents make this claim on the app's behalf and are wrong the moment a
+third request appears: the Privacy section of `SettingsView`, which the user
+reads on screen; `/privacy` in the `Web` repository, which is the URL App Store
+Connect points at; and `/support`. They are separate repositories and nothing
+propagates between them, so a change here is three edits, by hand.
 
 ## Git
 

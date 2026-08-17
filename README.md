@@ -225,10 +225,15 @@ swap faces of people who have agreed to it.
 
 ## Privacy
 
-The only network request the app ever makes is the one-time model download.
+The app makes two kinds of network request: the one-time model download, and an
+App Store version lookup — once per launch, and again whenever Settings ▸ Check
+for Updates is pressed. The lookup sends the app's own store id and receives a
+version number; it has no request body, so there is nothing for anything else
+to travel in.
+
 There is no backend, no analytics and no telemetry. Photos and videos are read
 from the pickers you choose, processed on the device, and written back to
-Photos or Files. Nothing is uploaded, and the app works with the network off.
+Photos or Files. Nothing is uploaded, and swapping works with the network off.
 
 ## Subscriptions
 

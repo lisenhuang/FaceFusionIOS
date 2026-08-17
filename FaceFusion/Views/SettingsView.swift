@@ -33,6 +33,7 @@
 
 import SwiftUI
 import Foundation
+import UIKit
 
 struct SettingsView: View {
     @Environment(AppModel.self) private var model
@@ -54,6 +55,13 @@ struct SettingsView: View {
     @State private var isRemoving = false
     @State private var isReloadingEngine = false
 
+    /// What the last Check for Updates concluded, and whether its alert is up.
+    /// Held separately from the launch check in `FaceFusionApp`, which shows
+    /// only the one outcome worth interrupting somebody for.
+    @State private var updateOutcome: UpdateChecker.Outcome?
+    @State private var isCheckingForUpdate = false
+    @State private var isShowingUpdateResult = false
+
     private enum Removal {
         case one(ModelDescriptor)
         case optional
@@ -73,6 +81,7 @@ struct SettingsView: View {
                 requiredSection
                 optionalSection
                 privacySection
+                aboutSection
             }
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.inline)
@@ -95,6 +104,21 @@ struct SettingsView: View {
                 Button("Cancel", role: .cancel) { }
             } message: { removal in
                 Text(confirmationMessage(for: removal))
+            }
+            // Every outcome gets an alert, including the boring one. A button
+            // the user pressed that answers by doing nothing visible reads as
+            // broken, and "up to date" is the answer most presses deserve.
+            .alert(updateAlertTitle,
+                   isPresented: $isShowingUpdateResult,
+                   presenting: updateOutcome) { outcome in
+                if case .available(let update) = outcome {
+                    Button("Update") { UIApplication.shared.open(update.storeURL) }
+                    Button("Not now", role: .cancel) { }
+                } else {
+                    Button("OK", role: .cancel) { }
+                }
+            } message: { outcome in
+                Text(updateAlertMessage(for: outcome))
             }
             // A download finishing while this sheet is open is the normal way
             // out of the "no models" state, and the engine will not start
@@ -687,12 +711,21 @@ struct SettingsView: View {
 
     // MARK: - Privacy
 
+    /// What the app promises, and it has to stay true of the app as built.
+    ///
+    /// The second line used to say the model download was "the only thing the
+    /// app uses the network for". That has been false since 1.1.0, when the
+    /// launch-time version check was added, and the Check for Updates button
+    /// below makes the contradiction visible on this one screen. The promise
+    /// worth making is about media, not about packet counts, and it survives
+    /// being stated accurately: the version check sends the app's own store id
+    /// and nothing else, and swapping still needs no connection at all.
     private var privacySection: some View {
         Section {
             privacyLine("lock.shield",
                         "Every face is detected, encoded and swapped on this device. No photo, video or frame is ever uploaded.")
             privacyLine("wifi.slash",
-                        "The one‑time model download is the only thing the app uses the network for. After it, everything works with no connection at all.")
+                        "The network is used for the one‑time model download, and to ask the App Store for its version number. Swapping itself works with no connection at all.")
         } header: {
             Text("Privacy")
         }
@@ -712,6 +745,78 @@ struct SettingsView: View {
                 .foregroundStyle(.tint)
         }
         .accessibilityElement(children: .combine)
+    }
+
+    // MARK: - About
+
+    /// The version this build is, and a way to find out whether it is the one
+    /// the store is selling.
+    ///
+    /// The app already asks this once per launch and stays quiet unless the
+    /// answer is "yes, there is something newer" — which is right for an
+    /// unprompted check and useless to somebody who wants to know *now*, or who
+    /// wants to confirm that the update they were told about actually
+    /// installed. Silence answers both questions with the same nothing.
+    private var aboutSection: some View {
+        Section {
+            LabeledContent("Version", value: UpdateChecker.installedVersion)
+
+            if isCheckingForUpdate {
+                HStack(spacing: 10) {
+                    ProgressView().controlSize(.small)
+                    Text("Checking the App Store…")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                }
+            } else {
+                Button {
+                    Task { await checkForUpdate() }
+                } label: {
+                    Label("Check for Updates", systemImage: "arrow.triangle.2.circlepath")
+                }
+            }
+        } header: {
+            Text("About")
+        } footer: {
+            Text("Checking asks the App Store for its version number and nothing else — no identifier, no device details, and nothing about the media you have worked on.")
+        }
+    }
+
+    private func checkForUpdate() async {
+        guard !isCheckingForUpdate else { return }
+        isCheckingForUpdate = true
+        let outcome = await UpdateChecker.fetch()
+        isCheckingForUpdate = false
+        updateOutcome = outcome
+        isShowingUpdateResult = true
+    }
+
+    private var updateAlertTitle: String {
+        switch updateOutcome {
+        case .available:
+            return String(localized: "A new version is available", bundle: .uiLanguage)
+        case .current:
+            return String(localized: "Morphiqo is up to date", bundle: .uiLanguage)
+        // `.none` cannot reach the screen — the alert is only raised with an
+        // outcome in hand — but a title is needed to type-check the property,
+        // and the cautious one is the right default.
+        case .unavailable, .none:
+            return String(localized: "Could not check for updates", bundle: .uiLanguage)
+        }
+    }
+
+    /// Both numbers in every case, because "which version am I on" and "which
+    /// version is current" are the two questions the button is pressed to
+    /// answer, and only one of them is on the row above.
+    private func updateAlertMessage(for outcome: UpdateChecker.Outcome) -> String {
+        switch outcome {
+        case .available(let update):
+            return String(localized: "You have \(UpdateChecker.installedVersion). Version \(update.version) is on the App Store.", bundle: .uiLanguage)
+        case .current(let latest):
+            return String(localized: "You have \(UpdateChecker.installedVersion), and the App Store has \(latest).", bundle: .uiLanguage)
+        case .unavailable:
+            return String(localized: "You have \(UpdateChecker.installedVersion). The App Store did not answer, so there is nothing to compare it against — check your connection and try again.", bundle: .uiLanguage)
+        }
     }
 
     // MARK: - Actions
