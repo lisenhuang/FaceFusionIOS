@@ -40,7 +40,7 @@ import os
 ///
 /// The engine is given a cache directory to compile into and knows nothing about
 /// the library that owns it — which is right, and worth keeping right, because
-/// the same engine is driven by the app's normal start and by the benchmark.
+/// the engine is driven through one path and should not learn about a second.
 /// These three closures are the whole of the exception: two marks either side of
 /// a compile, and a verification pass that is only ever run after everything
 /// cheaper has already failed.
@@ -112,9 +112,8 @@ final class FaceFusionEngine: @unchecked Sendable {
     /// graphs are deleted, no frame is part-way through reading a graph that is
     /// about to stop existing, and no second `prepare` can slip between the two
     /// attempts and rebuild sessions against a directory this one is emptying.
-    /// Doing the same thing from a caller would give up all three, and there are
-    /// two callers — the app's normal start and the benchmark — so it would have
-    /// to be done twice and stay right in both.
+    /// Doing the same thing from a caller would give up all three, and would
+    /// have to be repeated — and stay right — in every caller that prepares.
     ///
     /// The repair is deliberately indifferent to *why* the preparation failed.
     /// ORT reuses a compiled Core ML artifact by existence alone: no integrity

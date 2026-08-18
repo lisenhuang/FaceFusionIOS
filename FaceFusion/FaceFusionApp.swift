@@ -18,10 +18,10 @@
 //  reaching for the model from outside SwiftUI's observation, which is how a
 //  screen ends up not updating.
 //
-//  The Mac build also started `--benchmark` and `--selftest` from here, because
+//  The Mac build also starts `--benchmark` and `--selftest` from here, because
 //  a shell-launched binary does not reliably get a window. Neither mode exists
-//  on iOS: there is no argv to read, and the benchmark is a button in Settings
-//  where it belongs, since the answer it produces differs per device.
+//  on iOS: there is no argv to read, and iOS has no benchmark of any kind — the
+//  Settings sweep that used to be the counterpart was removed in 1.9.0.
 //
 
 import SwiftUI

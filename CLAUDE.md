@@ -114,14 +114,38 @@ clean install" is not the bar.
 - **Derived caches keyed by what you are changing.** The Core ML compile cache is
   keyed by model file name — a change that renames model files silently spends
   the whole compile cost on the next launch.
-- **Anything persisted or decoded.** Saved settings, the benchmark summary, the
-  onboarding flag. The `Codable` engine types are the sharp edge: a new field
+- **Anything persisted or decoded.** Saved settings, the onboarding flag, the
+  successful-save count behind the review prompt. The `Codable` engine types are the sharp edge: a new field
   needs a default so an older blob still decodes, and a removed or renamed one
   has to be tolerated rather than assumed gone.
 
 If a change genuinely cannot be made upgrade-safe, say so and describe the
 migration it needs — do not ship something that only holds together on a device
 that has never run the app before.
+
+## iOS and macOS ship as one App Store record
+
+Morphiqo is a **Universal Purchase**: app id `6797135085` is a single store
+record covering iPhone, iPad, Mac and Vision, not two listings. Three things
+follow, and the first two have already caused bugs:
+
+- **`itunes.apple.com/lookup` returns one result with one version number, and
+  it is the iOS one.** There is no `kind == "mac-software"` record to find —
+  that kind belongs to apps with a *separate* Mac listing. Ours is
+  `kind == "software"` with `MacDesktop-MacDesktop` in `supportedDevices`, which
+  is the only public signal that the record contains a Mac build at all. An iPad
+  app merely runnable on Apple silicon has neither, which is what makes the
+  signal usable. `UpdateChecker.parse` depends on exactly this.
+
+- **Keep `MARKETING_VERSION` identical in both projects.** Because one number is
+  published for the whole record, the Mac's Check for Updates can only be right
+  while the two platforms are released at the same version. They diverged once
+  already — iOS 1.8.1 against Mac 1.8.0 — and a Mac on 1.8.0 would have been
+  told 1.8.1 was available when no new Mac build existed. The build numbers may
+  differ; the marketing version may not.
+
+- **A purchase on either platform unlocks both**, which is why the product
+  identifiers are duplicated rather than being platform-specific.
 
 ## Privacy is a hard constraint, not a goal
 

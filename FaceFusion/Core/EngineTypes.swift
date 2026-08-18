@@ -11,8 +11,8 @@
 //  XPC for third-party apps, so nothing here crosses a process boundary any
 //  more — but the shapes are validated against a working implementation and
 //  they are still the one place a face, a policy or a stage timing is defined.
-//  Keeping them wire-shaped costs nothing and keeps the benchmark and the
-//  preference store able to persist a configuration verbatim.
+//  Keeping them wire-shaped costs nothing and keeps the preference store able
+//  to persist a configuration verbatim.
 //
 
 import Foundation
@@ -113,8 +113,8 @@ enum ComputePolicy: String, Codable, Sendable, CaseIterable, Identifiable {
     }
 }
 
-/// Lower-level execution knobs. Defaults are what ships; the benchmark mode
-/// sweeps them to find what actually helps on a given machine.
+/// Lower-level execution knobs. The defaults are what ships, and nothing in
+/// the app varies them — they exist so a configuration can be stated in full.
 struct EngineTuning: Codable, Sendable, Equatable {
     /// Every model here has fully static shapes, and telling Core ML so lets
     /// it take graph regions it would otherwise leave to the CPU.
@@ -372,8 +372,8 @@ struct SwapOptions: Codable, Sendable {
     }
 }
 
-/// Per-stage cost of one frame, in seconds. Used by the benchmark and the
-/// engine's periodic timing log.
+/// Per-stage cost of one frame, in seconds. Used by the engine's periodic
+/// timing log.
 struct StageSeconds: Codable, Sendable, Equatable {
     var detect: Double = 0
     var landmarks: Double = 0
@@ -479,8 +479,7 @@ func makeEngineNSError(_ code: EngineError, underlying: String? = nil) -> NSErro
 
 /// Kept from the Mac design even though no message is encoded on the hot path
 /// any more: it is still the one place the encoder and decoder for these types
-/// are configured, which is what a settings blob or a saved benchmark run
-/// should go through.
+/// are configured, which is what a settings blob should go through.
 enum EngineJSON {
     static func encode<T: Encodable>(_ value: T) throws -> Data {
         try JSONEncoder().encode(value)

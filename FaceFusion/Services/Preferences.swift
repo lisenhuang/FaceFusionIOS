@@ -92,19 +92,6 @@ final class Preferences {
         didSet { defaults.set(compute.rawValue, forKey: Key.compute) }
     }
 
-    /// The last verdict from `EngineBenchmark`, kept so Settings can show what
-    /// was measured on *this* device rather than making the user run it again
-    /// to remember the answer.
-    var benchmarkSummary: String? {
-        didSet {
-            if let benchmarkSummary {
-                defaults.set(benchmarkSummary, forKey: Key.benchmarkSummary)
-            } else {
-                defaults.removeObject(forKey: Key.benchmarkSummary)
-            }
-        }
-    }
-
     // MARK: - Swap settings
 
     var enhanceFace: Bool {
@@ -193,7 +180,6 @@ final class Preferences {
         theme = AppTheme(rawValue: defaults.string(forKey: Key.theme) ?? "") ?? .system
         language = AppLanguage(rawValue: defaults.string(forKey: Key.language) ?? "") ?? .system
         compute = ComputePolicy(rawValue: defaults.string(forKey: Key.compute) ?? "") ?? .automatic
-        benchmarkSummary = defaults.string(forKey: Key.benchmarkSummary)
 
         enhanceFace = defaults.bool(forKey: Key.enhanceFace)
         maskOcclusion = defaults.bool(forKey: Key.maskOcclusion)
@@ -226,7 +212,9 @@ final class Preferences {
         static let theme = "appearance.theme"
         static let language = "appearance.language"
         static let compute = "engine.compute"
-        static let benchmarkSummary = "engine.benchmarkSummary"
+        // "engine.benchmarkSummary" was written by builds up to 1.9.0 and is
+        // no longer read. Retired, not reused: never give this name a new
+        // meaning, because an older install still has the old value.
         static let enhanceFace = "swap.enhanceFace"
         static let maskOcclusion = "swap.maskOcclusion"
         static let identityStrength = "swap.identityStrength"

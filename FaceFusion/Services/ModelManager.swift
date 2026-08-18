@@ -333,9 +333,10 @@ final class ModelManager {
     ///
     /// The compute policy is the user's; the two EP options are the defaults
     /// `AppModel` prepares with, which is the configuration whose artifacts have
-    /// to be there on an ordinary launch. The benchmark's variants compile
-    /// alongside them under their own cache keys and are not described here on
-    /// purpose — see `EngineBenchmark`.
+    /// to be there on an ordinary launch. Until 1.9.0 the Settings sweep also
+    /// compiled its own variants alongside these under separate cache keys,
+    /// which is why this describes one configuration rather than the directory's
+    /// whole contents. Those variants may still be on an upgraded device.
     private var currentCompileFingerprint: CompileFingerprint {
         CompileFingerprint.current(compute: Preferences.shared.compute, tuning: EngineTuning())
     }
@@ -691,8 +692,8 @@ final class ModelManager {
                           fingerprint: fingerprint)
         // The marker is this pass's to clear. Nothing may prepare the engine
         // until the launch pass has finished — `loadableModels` is nil while
-        // `isPreparingLibrary` is true, and both `AppModel.startEngineIfPossible`
-        // and the benchmark go through it — so a marker seen here can only have
+        // `isPreparingLibrary` is true, and every path that prepares the engine
+        // goes through it — so a marker seen here can only have
         // been left behind by a process that is no longer running.
         markCompileFinished()
     }

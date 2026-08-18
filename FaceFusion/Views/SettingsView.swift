@@ -6,15 +6,13 @@
 //  particular device, what is on disk, and what the app promises about where
 //  the work happens.
 //
-//  There was no equivalent on the Mac, and the reason there is one here is the
-//  Performance section. The Mac shipped one execution-provider configuration
-//  because the sweep only ever had to be run on one class of machine: `ALL`
-//  with static shapes, with `CPUAndNeuralEngine` measuring 17× *slower* because
-//  these are convolutional generators the ANE largely rejects. That result does
-//  not transfer. An iPhone's ANE-to-GPU balance is not a Mac's, and it is not
-//  the same between an A-series and an M-series iPad either, so the sweep moves
-//  from a `--benchmark` command-line flag to a button — the answer has to be
-//  measured on the device in the user's hand, not guessed from a Mac.
+//  The Performance section offers a choice; it no longer measures one. It used
+//  to carry a sweep that timed every execution-provider configuration on the
+//  frame in hand, on the argument that an iPhone's ANE-to-GPU balance is not a
+//  Mac's and the Mac's one-off answer does not transfer. The argument still
+//  holds and the price stopped being worth paying: minutes of work and a device
+//  warm enough to throttle, to settle a setting almost nobody moved. The
+//  policies the sweep chose between are simply offered directly now.
 //
 //  Everything else here exists because a phone is not a Mac in a different way:
 //  the app's library is 900 MB of redownloadable weights on a device sold with
@@ -41,12 +39,6 @@ struct SettingsView: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     @Bindable private var preferences = Preferences.shared
-
-    /// Owned by the sheet rather than by `AppModel`: a measurement is a thing
-    /// the user starts here and reads here, and nothing outside this screen has
-    /// any use for the rows. The winning policy is written to `Preferences`,
-    /// which is what actually outlives the sheet.
-    @State private var benchmark = EngineBenchmark()
 
     /// What a confirmation is currently being asked about. One piece of state
     /// for all three destructive actions: they ask the same question about
@@ -210,14 +202,6 @@ struct SettingsView: View {
                 computeRow(policy)
             }
 
-            measureControl
-
-            ForEach(benchmark.rows) { row in
-                benchmarkRow(row)
-            }
-
-            verdictRow
-
             deviceRows
         } header: {
             Text("Performance")
@@ -254,164 +238,8 @@ struct SettingsView: View {
             .contentShape(.rect)
         }
         .buttonStyle(.plain)
-        .disabled(isReloadingEngine || benchmark.isRunning)
+        .disabled(isReloadingEngine)
         .accessibilityAddTraits(policy == preferences.compute ? [.isButton, .isSelected] : .isButton)
-    }
-
-    @ViewBuilder private var measureControl: some View {
-        if benchmark.isRunning {
-            VStack(alignment: .leading, spacing: 8) {
-                HStack(spacing: 10) {
-                    ProgressView()
-                    Text("Measuring…").font(.callout)
-                    Spacer(minLength: 8)
-                    quietButton("Stop") { benchmark.cancel() }
-                }
-                Text("Every setting is timed on the frame you are working on. This takes a few minutes and the device will get warm.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-        } else {
-            Button {
-                Task { await measure() }
-            } label: {
-                Label("Measure on this device", systemImage: "speedometer")
-            }
-            .disabled(!canMeasure)
-
-            if !canMeasure {
-                Text(measureHint)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-        }
-    }
-
-    private var canMeasure: Bool {
-        manager.isReady && model.sourceURL != nil && model.targetURL != nil && !isReloadingEngine
-    }
-
-    private var measureHint: String {
-        guard manager.isReady else {
-            return String(localized: "The models have to be installed before anything can be timed.", bundle: .uiLanguage)
-        }
-        return String(localized: "Load a face and a video or photo first. The measurement runs on the frame you are working on, so the numbers describe your own material rather than a synthetic one.", bundle: .uiLanguage)
-    }
-
-    /// The row of a completed sweep.
-    ///
-    /// The per-stage columns are the point of the table — they are how it
-    /// becomes obvious that the enhancer is most of a frame — but seven numbers
-    /// have never fitted across a phone. They scroll sideways inside the row so
-    /// that the page itself never does.
-    private func benchmarkRow(_ row: EngineBenchmark.Row) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            ViewThatFits(in: .horizontal) {
-                HStack(alignment: .firstTextBaseline, spacing: 8) {
-                    Text(row.name).font(.callout.weight(.medium))
-                    Spacer(minLength: 8)
-                    headline(for: row)
-                }
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(row.name).font(.callout.weight(.medium))
-                    headline(for: row)
-                }
-            }
-
-            if let stages = row.stages {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(alignment: .bottom, spacing: 14) {
-                        stageColumn("detect", stages.detect)
-                        stageColumn("landmarks", stages.landmarks)
-                        stageColumn("match", stages.match)
-                        stageColumn("swap", stages.swap)
-                        stageColumn("paste", stages.paste)
-                        stageColumn("enhance", stages.enhance)
-                    }
-                }
-                .scrollBounceBehavior(.basedOnSize, axes: .horizontal)
-            } else if let error = row.error {
-                Text(error)
-                    .font(.caption)
-                    .foregroundStyle(.orange)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-        }
-        .accessibilityElement(children: .combine)
-    }
-
-    @ViewBuilder private func headline(for row: EngineBenchmark.Row) -> some View {
-        if let stages = row.stages {
-            HStack(spacing: 6) {
-                if row.id == fastestRowID {
-                    Text("Fastest")
-                        .font(.caption2.weight(.semibold))
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2)
-                        .background(.tint.opacity(0.18), in: .capsule)
-                }
-                Text(rate(stages.total))
-                    .font(.callout.monospacedDigit())
-                    .foregroundStyle(.secondary)
-            }
-        } else if row.error != nil {
-            Text("Failed").font(.caption).foregroundStyle(.orange)
-        } else {
-            ProgressView().controlSize(.small)
-        }
-    }
-
-    /// Which configuration won, so far. Recomputed rather than stored because
-    /// rows arrive one at a time and the leader changes as they do.
-    private var fastestRowID: String? {
-        var bestID: String?
-        var bestTotal = Double.greatestFiniteMagnitude
-        for row in benchmark.rows {
-            guard let total = row.stages?.total, total > 0, total < bestTotal else { continue }
-            bestTotal = total
-            bestID = row.id
-        }
-        return bestID
-    }
-
-    private func stageColumn(_ name: LocalizedStringKey, _ seconds: Double) -> some View {
-        VStack(alignment: .trailing, spacing: 1) {
-            Text(String(format: "%.0f", seconds * 1000))
-                .font(.caption.monospacedDigit())
-            Text(name)
-                .font(.caption2)
-                .foregroundStyle(.secondary)
-        }
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(name) \(Int((seconds * 1000).rounded())) milliseconds")
-    }
-
-    /// "465 ms · 2.2 fps". Both, because one answers "is this slow" and the
-    /// other answers "how long will my video take".
-    private func rate(_ seconds: Double) -> String {
-        guard seconds > 0 else { return "—" }
-        return String(format: "%.0f ms · %.2f fps", seconds * 1000, 1 / seconds)
-    }
-
-    @ViewBuilder private var verdictRow: some View {
-        if let verdict = benchmark.verdict {
-            Label {
-                Text(verdict).fixedSize(horizontal: false, vertical: true)
-            } icon: {
-                Image(systemName: "checkmark.seal.fill").foregroundStyle(.green)
-            }
-            .font(.callout)
-        } else if !benchmark.isRunning, let summary = preferences.benchmarkSummary {
-            Label {
-                Text("Last measured: \(summary)").fixedSize(horizontal: false, vertical: true)
-            } icon: {
-                Image(systemName: "clock.arrow.circlepath")
-            }
-            .font(.callout)
-            .foregroundStyle(.secondary)
-        }
     }
 
     /// What the export loop is currently willing to do, and why.
@@ -559,16 +387,9 @@ struct SettingsView: View {
     /// mid-verify, the launch pass is renaming them from another task, an export
     /// has the engine running frame after frame, or a removal already started is
     /// still waiting for the engine to let go.
-    ///
-    /// The measurement counts for the same reason, and it is the worst of them.
-    /// It rebuilds every session seven times over from `installedPaths()` taken
-    /// afresh each round, and "Remove all models" would empty the compile cache
-    /// directory Core ML is compiling into at that moment — the one thing the
-    /// launch pass is careful never to do.
     private var canRemove: Bool {
         !manager.isWorking && !manager.isPreparingLibrary
             && !model.isRendering && !isRemoving && !isReloadingEngine
-            && !benchmark.isRunning
     }
 
     /// One model: what it does, what it costs, and the single control that acts
@@ -835,15 +656,6 @@ struct SettingsView: View {
                 .contentShape(.rect)
         }
         .buttonStyle(.plain)
-    }
-
-    private func measure() async {
-        // The sweep leaves the engine holding whichever configuration it timed
-        // last, which is the CPU baseline — 40× slower than the default on the
-        // Mac's measurements. `EngineBenchmark.finish` already puts the winning
-        // policy back, on every exit including cancellation, so there is nothing
-        // to do here. Reloading again would only undo that work.
-        await benchmark.run(model: model)
     }
 
     /// Rebuilds the sessions so a changed policy actually takes effect.

@@ -392,7 +392,7 @@ final class ORTRuntime {
             // generators the ANE largely rejects, so the run degenerates into
             // constant fallback. So `ALL` stays the default here too. But an
             // iPhone's ANE-to-GPU balance is not a Mac's, which is exactly why
-            // the policy is a setting and `EngineBenchmark` can re-measure it
+            // the policy is a setting the user can change at any time
             // on the device in the user's hand rather than inherit a verdict
             // reached on desktop silicon.
             do {

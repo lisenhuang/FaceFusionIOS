@@ -113,109 +113,7 @@
         }
       }
     },
-    "%@ — %@ fps, %@× faster than CPU." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "%1$@ — %2$@ fps, %3$@× faster than CPU."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$@ — %2$@ fps、CPU の %3$@ 倍の速さです。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$@ — %2$@ fps, CPU보다 %3$@배 빠릅니다."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@：%@ fps，比 CPU 快 %@ 倍。"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@：%@ fps，比 CPU 快 %@ 倍。"
-          }
-        }
-      }
-    },
-    "%@ — %@ fps, the fastest of the %lld settings measured." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "%1$@ — %2$@ fps, the fastest of the %3$lld settings measured."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$@ — %2$@ fps、計測した %3$lld 種類の設定のうち最速です。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$@ — %2$@ fps, 측정한 설정 %3$lld개 가운데 가장 빠릅니다."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@：%@ fps，在所测的 %lld 项设置中最快。"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@：%@ fps，在所测的 %lld 项设置中最快。"
-          }
-        }
-      }
-    },
-    "%@ — %@ fps." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "%1$@ — %2$@ fps."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$@ — %2$@ fps です。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$@ — %2$@ fps."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@：%@ fps。"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@：%@ fps。"
-          }
-        }
-      }
-    },
-    "%@ · %@ left" : {
+"%@ · %@ left" : {
       "extractionState" : "stale",
       "localizations" : {
         "en" : {
@@ -1080,63 +978,7 @@
         }
       }
     },
-    "Automatic, flexible shapes" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "自動（可変シェイプ）"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "자동, 가변 입력 형태"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "自动，灵活形状"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "自动，灵活形状"
-          }
-        }
-      }
-    },
-    "Automatic, without enhancement" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "自動（ディテール強調なし）"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "자동, 디테일 향상 없음"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "自动，不启用增强"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "自动，不启用增强"
-          }
-        }
-      }
-    },
-    "Cancel" : {
+"Cancel" : {
       "localizations" : {
         "ja" : {
           "stringUnit" : {
@@ -1332,35 +1174,7 @@
         }
       }
     },
-    "Choose a face and a photo or video first. The measurement runs on your own media, because the cost of a frame depends on what is in it." : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "先に顔と、写真または動画を選んでください。1 フレームにかかる時間は写っているものによって変わるため、計測はご自身の素材で行います。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "먼저 얼굴과 사진 또는 비디오를 선택하십시오. 프레임 하나를 처리하는 비용은 그 안에 무엇이 담겨 있는지에 따라 달라지므로, 측정은 사용자의 실제 미디어에서 진행합니다."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "请先选择人脸和照片或视频。测量会在你自己的素材上进行，因为一帧的开销取决于画面中的内容。"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "请先选择人脸和照片或视频。测量会在你自己的素材上进行，因为一帧的开销取决于画面中的内容。"
-          }
-        }
-      }
-    },
-    "Choose a video or photo to see it here" : {
+"Choose a video or photo to see it here" : {
       "localizations" : {
         "ja" : {
           "stringUnit" : {
@@ -1870,64 +1684,7 @@
         }
       }
     },
-    "Download the models first, then measure." : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "先にモデルをダウンロードしてから計測してください。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "먼저 모델을 다운로드한 다음 측정하십시오."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "请先下载模型，再进行测量。"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "请先下载模型，再进行测量。"
-          }
-        }
-      }
-    },
-    "Downloaded from the models' official release and verified against a checksum before use." : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "各モデルの公式リリースからダウンロードし、使用前にチェックサムで検証します。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "모델의 공식 배포본에서 다운로드하며, 사용하기 전에 체크섬으로 검증합니다."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "从模型的官方发布版本下载，使用前会核对校验和。"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "从模型的官方发布版本下载，使用前会核对校验和。"
-          }
-        }
-      }
-    },
-    "Edge softness" : {
+"Edge softness" : {
       "localizations" : {
         "ja" : {
           "stringUnit" : {
@@ -2263,35 +2020,7 @@
         }
       }
     },
-    "Every setting is timed on the frame you are working on. This takes a few minutes and the device will get warm." : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "いま作業中のフレームで、すべての設定を計測します。数分かかり、本体が熱くなります。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "지금 작업 중인 프레임에서 모든 설정의 속도를 측정합니다. 몇 분이 걸리고 기기가 따뜻해집니다."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "每种设置都会在你当前处理的画面上计时。这需要几分钟，设备会发热。"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "每种设置都会在你当前处理的画面上计时。这需要几分钟，设备会发热。"
-          }
-        }
-      }
-    },
-    "Everything here can be downloaded again. Removing it costs the wait, not the work — no face, video or setting is touched. It is kept out of your iCloud backup for the same reason." : {
+"Everything here can be downloaded again. Removing it costs the wait, not the work — no face, video or setting is touched. It is kept out of your iCloud backup for the same reason." : {
       "localizations" : {
         "ja" : {
           "stringUnit" : {
@@ -3396,35 +3125,7 @@
         }
       }
     },
-    "Last measured: %@" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "前回の計測：%@"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "최근 측정: %@"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "上次测量：%@"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "上次测量：%@"
-          }
-        }
-      }
-    },
-    "Lets the system spread the work across the Neural Engine, GPU and CPU. Fastest on most devices." : {
+"Lets the system spread the work across the Neural Engine, GPU and CPU. Fastest on most devices." : {
       "localizations" : {
         "ja" : {
           "stringUnit" : {
@@ -3536,35 +3237,7 @@
         }
       }
     },
-    "Load a face and a video or photo first. The measurement runs on the frame you are working on, so the numbers describe your own material rather than a synthetic one." : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "先に顔と、動画または写真を読み込んでください。計測はいま作業中のフレームで行うため、数値は既成のサンプルではなくご自身の素材を表します。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "먼저 얼굴과 비디오 또는 사진을 불러오십시오. 측정은 지금 작업 중인 프레임에서 진행하므로, 이 수치는 임의로 만든 자료가 아니라 사용자의 실제 소재를 나타냅니다."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "请先载入人脸和视频或照片。测量会在你正在处理的那一帧上进行，因此这些数字描述的是你自己的素材，而不是合成素材。"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "请先载入人脸和视频或照片。测量会在你正在处理的那一帧上进行，因此这些数字描述的是你自己的素材，而不是合成素材。"
-          }
-        }
-      }
-    },
-    "Loading lifetime access…" : {
+"Loading lifetime access…" : {
       "localizations" : {
         "ja" : {
           "stringUnit" : {
@@ -3816,119 +3489,7 @@
         }
       }
     },
-    "Measure on this device" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "このデバイスで計測"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "이 기기에서 측정"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "在本机测量"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "在本机测量"
-          }
-        }
-      }
-    },
-    "Measurement was stopped before anything could be compared." : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "比較できる結果が出る前に計測を停止しました。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "비교할 결과가 나오기 전에 측정이 중단되었습니다."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "测量已停止，未能完成任何比较。"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "测量已停止，未能完成任何比较。"
-          }
-        }
-      }
-    },
-    "Measurement was stopped early." : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "計測を途中で停止しました。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "측정이 도중에 중단되었습니다."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "测量已提前停止。"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "测量已提前停止。"
-          }
-        }
-      }
-    },
-    "Measuring…" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "計測中…"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "측정 중…"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "正在测量…"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "正在测量…"
-          }
-        }
-      }
-    },
-    "Memory was running low, so detail enhancement and occlusion masking have been switched off. They return the next time the engine starts." : {
+"Memory was running low, so detail enhancement and occlusion masking have been switched off. They return the next time the engine starts." : {
       "localizations" : {
         "ja" : {
           "stringUnit" : {
@@ -4299,63 +3860,7 @@
         }
       }
     },
-    "No face was found in the frame you are previewing. Move to a frame with a face in it and measure again." : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "プレビュー中のフレームに顔が見つかりませんでした。顔が写っているフレームに移動して、もう一度計測してください。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "미리보기 중인 프레임에서 얼굴을 찾지 못했습니다. 얼굴이 있는 프레임으로 이동한 다음 다시 측정하십시오."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "你正在预览的帧中未找到人脸。请切换到有人脸的帧，然后重新测量。"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "你正在预览的帧中未找到人脸。请切换到有人脸的帧，然后重新测量。"
-          }
-        }
-      }
-    },
-    "No face was found in the source image, so there is nothing to measure. Try a clearer, front-facing photo." : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ソース画像に顔が見つからなかったため、計測するものがありません。より鮮明な、正面を向いた写真をお試しください。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "원본 이미지에서 얼굴을 찾지 못해 측정할 대상이 없습니다. 더 선명한 정면 사진으로 시도해 보십시오."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "源图像中未找到人脸，因此无从测量。请换一张更清晰的正面照片。"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "源图像中未找到人脸，因此无从测量。请换一张更清晰的正面照片。"
-          }
-        }
-      }
-    },
-    "No face was found in the source image. Try a clearer, front-facing photo." : {
+"No face was found in the source image. Try a clearer, front-facing photo." : {
       "localizations" : {
         "ja" : {
           "stringUnit" : {
@@ -4551,35 +4056,7 @@
         }
       }
     },
-    "Nothing could be measured on this device. The models may need reinstalling." : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "このデバイスでは何も計測できませんでした。モデルの再インストールが必要かもしれません。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "이 기기에서는 아무것도 측정하지 못했습니다. 모델을 다시 설치해야 할 수 있습니다."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "在此设备上未能测出任何结果。可能需要重新安装模型。"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "在此设备上未能测出任何结果。可能需要重新安装模型。"
-          }
-        }
-      }
-    },
-    "Objects crossing the face stay in front. Slower." : {
+"Objects crossing the face stay in front. Slower." : {
       "localizations" : {
         "ja" : {
           "stringUnit" : {
@@ -4663,35 +4140,7 @@
         }
       }
     },
-    "Older graph format" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "旧グラフ形式"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "이전 그래프 형식"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "旧版计算图格式"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "旧版计算图格式"
-          }
-        }
-      }
-    },
-    "On disk" : {
+"On disk" : {
       "localizations" : {
         "ja" : {
           "stringUnit" : {
@@ -6781,64 +6230,7 @@
         }
       }
     },
-    "The engine is still starting. Try again in a moment." : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "エンジンはまだ起動中です。しばらくしてからもう一度お試しください。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "엔진이 아직 시작하는 중입니다. 잠시 후 다시 시도하십시오."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "引擎仍在启动中。请稍后再试。"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "引擎仍在启动中。请稍后再试。"
-          }
-        }
-      }
-    },
-    "The face‑swapping models are published for non‑commercial research use. Only swap faces of people who have agreed to it." : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "顔の入れ替えに使うモデルは、非営利の研究用途として公開されています。入れ替えは、本人の同意が得られている顔にのみ行ってください。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "얼굴을 바꾸는 모델은 비상업적 연구 목적으로 공개된 것입니다. 동의한 사람의 얼굴만 바꾸십시오."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "换脸模型以非商业研究用途发布。请只替换已征得本人同意的人脸。"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "换脸模型以非商业研究用途发布。请只替换已征得本人同意的人脸。"
-          }
-        }
-      }
-    },
-    "The model could not be saved to this device." : {
+"The model could not be saved to this device." : {
       "localizations" : {
         "ja" : {
           "stringUnit" : {
@@ -6890,34 +6282,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "无法读取模型清单：%@"
-          }
-        }
-      }
-    },
-    "The models have to be installed before anything can be timed." : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "計測するには、先にモデルをインストールする必要があります。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "속도를 측정하려면 먼저 모델을 설치해야 합니다."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "必须先安装模型，才能进行计时。"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "必须先安装模型，才能进行计时。"
           }
         }
       }
@@ -7062,35 +6426,7 @@
         }
       }
     },
-    "There was not enough memory to run the measurement." : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "計測を実行するためのメモリが足りませんでした。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "측정을 실행할 메모리가 부족했습니다."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "内存不足，无法进行测量。"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "内存不足，无法进行测量。"
-          }
-        }
-      }
-    },
-    "Thermal state" : {
+"Thermal state" : {
       "localizations" : {
         "ja" : {
           "stringUnit" : {
@@ -7830,35 +7166,7 @@
         }
       }
     },
-    "Your device became warm while measuring, so these figures are pessimistic." : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "計測中に本体が熱くなったため、これらの数値は実際より低めに出ています。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "측정하는 동안 기기가 따뜻해졌으므로 이 수치는 실제보다 낮게 나온 값입니다."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "测量期间设备发热，因此这些数字偏保守。"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "测量期间设备发热，因此这些数字偏保守。"
-          }
-        }
-      }
-    },
-    "Your photo library would not accept that image." : {
+"Your photo library would not accept that image." : {
       "localizations" : {
         "ja" : {
           "stringUnit" : {

@@ -193,7 +193,8 @@ final class AppModel {
     /// The execution provider is chosen when a session is created, so changing
     /// this has to rebuild every session. The setter restarts the engine rather
     /// than leaving a preference that quietly does nothing until the next
-    /// launch — which is exactly how someone concludes the benchmark lied.
+    /// launch — which is exactly how someone concludes the setting does
+    /// nothing.
     var compute: ComputePolicy {
         get { Preferences.shared.compute }
         set {
