@@ -1,0 +1,3 @@
+
+# The strings check builds into its own DerivedData path.
+.strings-check/

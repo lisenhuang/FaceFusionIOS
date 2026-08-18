@@ -86,7 +86,6 @@
       }
     },
 "%@ · %@ left" : {
-      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -204,41 +203,7 @@
         }
       }
     },
-    "%@ %lld milliseconds" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "%1$@ %2$lld milliseconds"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$@ %2$lld ミリ秒"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$@ %2$lld밀리초"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ %lld 毫秒"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ %lld 毫秒"
-          }
-        }
-      }
-    },
-    "%@ images cannot be written." : {
+"%@ images cannot be written." : {
       "localizations" : {
         "ja" : {
           "stringUnit" : {
@@ -1460,35 +1425,7 @@
         }
       }
     },
-    "detect" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "検出"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "감지"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "检测"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "检测"
-          }
-        }
-      }
-    },
-    "Dismiss" : {
+"Dismiss" : {
       "localizations" : {
         "ja" : {
           "stringUnit" : {
@@ -1796,35 +1733,7 @@
         }
       }
     },
-    "enhance" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "補正"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "개선"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "增强"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "增强"
-          }
-        }
-      }
-    },
-    "Enhance detail" : {
+"Enhance detail" : {
       "localizations" : {
         "ja" : {
           "stringUnit" : {
@@ -2301,7 +2210,6 @@
       }
     },
     "Face swapper" : {
-      "extractionState" : "stale",
       "localizations" : {
         "ja" : {
           "stringUnit" : {
@@ -2441,35 +2349,7 @@
         }
       }
     },
-    "Fastest" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "最速"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "가장 빠름"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "最快"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "最快"
-          }
-        }
-      }
-    },
-    "Files" : {
+"Files" : {
       "localizations" : {
         "ja" : {
           "stringUnit" : {
@@ -3041,35 +2921,7 @@
         }
       }
     },
-    "landmarks" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "特徴点"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "특징점"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "关键点"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "关键点"
-          }
-        }
-      }
-    },
-    "Language" : {
+"Language" : {
       "localizations" : {
         "ja" : {
           "stringUnit" : {
@@ -3405,35 +3257,7 @@
         }
       }
     },
-    "match" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "照合"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "매칭"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "匹配"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "匹配"
-          }
-        }
-      }
-    },
-    "Match strictness" : {
+"Match strictness" : {
       "localizations" : {
         "ja" : {
           "stringUnit" : {
@@ -3518,7 +3342,6 @@
       }
     },
     "Models" : {
-      "extractionState" : "stale",
       "localizations" : {
         "ja" : {
           "stringUnit" : {
@@ -4224,35 +4047,7 @@
         }
       }
     },
-    "paste" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "合成"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "합성"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "贴回"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "贴回"
-          }
-        }
-      }
-    },
-    "Pay once for permanent Pro access. No renewal." : {
+"Pay once for permanent Pro access. No renewal." : {
       "localizations" : {
         "ja" : {
           "stringUnit" : {
@@ -5810,35 +5605,7 @@
         }
       }
     },
-    "swap" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "入替"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "교체"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "换脸"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "换脸"
-          }
-        }
-      }
-    },
-    "Swap videos and export your results with unlimited Pro access." : {
+"Swap videos and export your results with unlimited Pro access." : {
       "localizations" : {
         "ja" : {
           "stringUnit" : {
