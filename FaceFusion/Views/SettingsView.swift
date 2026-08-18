@@ -38,6 +38,10 @@ struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
+    /// Apple's in-app rating sheet. `ReviewPrompt` decides whether asking now
+    /// can work; this is only how the action reaches it.
+    @Environment(\.requestReview) private var requestReview
+
     @Bindable private var preferences = Preferences.shared
 
     /// What a confirmation is currently being asked about. One piece of state
@@ -596,10 +600,18 @@ struct SettingsView: View {
                     Label("Check for Updates", systemImage: "arrow.triangle.2.circlepath")
                 }
             }
+
+            Button {
+                if let url = ReviewPrompt.rate(requestReview) {
+                    UIApplication.shared.open(url)
+                }
+            } label: {
+                Label("Rate Morphiqo", systemImage: "star")
+            }
         } header: {
             Text("About")
         } footer: {
-            Text("Checking asks the App Store for its version number and nothing else — no identifier, no device details, and nothing about the media you have worked on.")
+            Text("Ratings are how other people find Morphiqo. It takes one tap and you stay in the app. Checking for updates asks the App Store for its version number and nothing else — no identifier, no device details, and nothing about the media you have worked on.")
         }
     }
 

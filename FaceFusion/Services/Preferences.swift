@@ -147,6 +147,18 @@ final class Preferences {
     ///
     /// The version rather than a `Bool`, so an update re-arms the ask exactly
     /// once instead of either never asking again or asking on every save.
+    /// When this app last asked the system for a review, most recent last, as
+    /// seconds since 1970.
+    ///
+    /// The system allows three requests per person per year and will not say
+    /// how many are left — or whether any given one was shown. Only this app
+    /// can request a review of this app, so our own calls are the closest thing
+    /// to that counter anyone outside the system can hold. It exists for the
+    /// Settings button, which must not be a control that silently does nothing.
+    var reviewRequestDates: [Double] {
+        didSet { defaults.set(reviewRequestDates, forKey: Key.reviewRequestDates) }
+    }
+
     var lastReviewPromptVersion: String {
         didSet { defaults.set(lastReviewPromptVersion, forKey: Key.lastReviewPromptVersion) }
     }
@@ -172,7 +184,8 @@ final class Preferences {
             Key.savesToPhotos: true,
             Key.hasCompletedOnboarding: false,
             Key.successfulSaveCount: 0,
-            Key.lastReviewPromptVersion: ""
+            Key.lastReviewPromptVersion: "",
+            Key.reviewRequestDates: [Double]()
         ])
 
         // A stored raw value can be from a build that spelled the case
@@ -200,6 +213,7 @@ final class Preferences {
         // first one because a missing key read as zero by accident.
         successfulSaveCount = defaults.integer(forKey: Key.successfulSaveCount)
         lastReviewPromptVersion = defaults.string(forKey: Key.lastReviewPromptVersion) ?? ""
+        reviewRequestDates = defaults.array(forKey: Key.reviewRequestDates) as? [Double] ?? []
 
         // `didSet` does not run during initialisation, so the stored choice has
         // to be pushed into the bundle override by hand. Doing it here rather
@@ -225,5 +239,6 @@ final class Preferences {
         static let hasCompletedOnboarding = "onboarding.completed"
         static let successfulSaveCount = "review.successfulSaveCount"
         static let lastReviewPromptVersion = "review.lastPromptedVersion"
+        static let reviewRequestDates = "review.requestDates"
     }
 }

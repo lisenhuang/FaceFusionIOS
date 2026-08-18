@@ -1,35 +1,7 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
-    "Checking asks the App Store for its version number and nothing else — no identifier, no device details, and nothing about the media you have worked on." : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "確認の際に App Store へ問い合わせるのはバージョン番号だけです。識別子も、デバイスの情報も、扱ったメディアに関することも送信しません。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "확인할 때 App Store에 묻는 것은 버전 번호뿐입니다. 식별자도, 기기 정보도, 작업한 미디어에 관한 정보도 보내지 않습니다."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "检查时只向 App Store 查询版本号，不发送任何标识符、设备信息，也不发送与你处理过的媒体有关的任何内容。"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "檢查時只向 App Store 查詢版本號，不傳送任何識別碼、裝置資訊，也不傳送與你處理過的媒體有關的任何內容。"
-          }
-        }
-      }
-    },
-    "Could not check for updates" : {
+"Could not check for updates" : {
       "localizations" : {
         "ja" : {
           "stringUnit" : {
@@ -4708,6 +4680,62 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "隐私"
+          }
+        }
+      }
+    },
+    "Ratings are how other people find Morphiqo. It takes one tap and you stay in the app. Checking for updates asks the App Store for its version number and nothing else — no identifier, no device details, and nothing about the media you have worked on." : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "評価は、ほかの人が Morphiqo を見つけるきっかけになります。ワンタップで済み、アプリから離れる必要もありません。アップデートの確認で App Store に問い合わせるのはバージョン番号だけです。識別子も、デバイスの情報も、扱ったメディアに関することも送信しません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "평점은 다른 사람들이 Morphiqo를 찾는 방법입니다. 한 번만 누르면 되고 앱을 벗어나지도 않습니다. 업데이트를 확인할 때 App Store에 묻는 것은 버전 번호뿐입니다. 식별자도, 기기 정보도, 작업한 미디어에 관한 정보도 보내지 않습니다."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "评分是其他人发现 Morphiqo 的方式。只需轻点一次，而且无需离开 App。检查更新时只向 App Store 查询版本号，不发送任何标识符、设备信息，也不发送与你处理过的媒体有关的任何内容。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "評分是其他人發現 Morphiqo 的方式。只需輕點一次，而且無需離開 App。檢查更新時只向 App Store 查詢版本號，不傳送任何識別碼、裝置資訊，也不傳送與你處理過的媒體有關的任何內容。"
+          }
+        }
+      }
+    },
+    "Rate Morphiqo" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Morphiqo を評価"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Morphiqo 평가하기"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "为 Morphiqo 评分"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "為 Morphiqo 評分"
           }
         }
       }

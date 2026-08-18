@@ -17,12 +17,17 @@
 //  view layer's whole part is handing over the environment's `requestReview`
 //  action; whether that action is ever reached is decided below.
 //
-//  Two things this deliberately is not. It never opens the App Store — the
-//  prompt is Apple's own sheet, presented over the app, and the user stays where
-//  they were. And it is never reachable from a control the user pressed: the
-//  Human Interface Guidelines require the ask to follow a moment that already
-//  went well, which is exactly why the callers are save and share successes and
-//  why there is no "Rate us" button anywhere to add one.
+//  The automatic path never opens the App Store: the prompt is Apple's own
+//  sheet, presented over the app, and the user stays where they were.
+//
+//  Settings also carries a Rate button, and it plays by different rules for a
+//  reason worth stating. The guidelines are about *unprompted* asks — they
+//  require one to follow a moment that already went well, which is why the
+//  automatic callers are save and share successes. Someone who opened Settings
+//  and pressed Rate has supplied that consent themselves. What a button must
+//  not do is nothing, and this one can be asked when the year's three requests
+//  are already spent, so it falls back to the listing's review form rather than
+//  pressing silently. See `rate(_:)`.
 //
 
 import Foundation
@@ -90,8 +95,62 @@ enum ReviewPrompt {
         guard Preferences.shared.lastReviewPromptVersion != currentVersion else { return }
 
         Preferences.shared.lastReviewPromptVersion = currentVersion
+        spendAllowance()
         request()
     }
+
+    // MARK: - The Settings button
+
+    /// How many requests the system grants per person per year.
+    ///
+    /// Apple's number, not ours, and it is the reason this file is careful.
+    private static let allowancePerYear = 3
+
+    /// Where a review can always be left, when the sheet cannot be shown.
+    private static let writeReviewURL = URL(
+        string: "https://apps.apple.com/app/id6797135085?action=write-review")!
+
+    /// Whether a request now stands any chance of being shown.
+    ///
+    /// A guess, and unavoidably so: the system keeps the real count and never
+    /// discloses it. Ours is drawn from the only calls that can affect it —
+    /// this app's — and it is wrong in one direction only. An install upgraded
+    /// from a build that predates this record starts with an empty history and
+    /// may believe it has an ask it has already spent; the cost is one press
+    /// that shows nothing, after which the record is accurate.
+    private static var hasAllowanceLeft: Bool {
+        let cutoff = Date().addingTimeInterval(-365 * 24 * 60 * 60).timeIntervalSince1970
+        let recent = Preferences.shared.reviewRequestDates.filter { $0 > cutoff }
+        return recent.count < allowancePerYear
+    }
+
+    /// Records a request against the year's allowance, and forgets the ones
+    /// that have aged out so the list cannot grow without bound.
+    private static func spendAllowance() {
+        let cutoff = Date().addingTimeInterval(-365 * 24 * 60 * 60).timeIntervalSince1970
+        var dates = Preferences.shared.reviewRequestDates.filter { $0 > cutoff }
+        dates.append(Date().timeIntervalSince1970)
+        Preferences.shared.reviewRequestDates = dates
+    }
+
+    /// The Rate button in Settings.
+    ///
+    /// Returns `nil` when it asked in place, or a URL the caller should open
+    /// when it could not. Both outcomes leave a review possible, which is the
+    /// requirement a button carries and an automatic prompt does not: a prompt
+    /// that stays silent has simply chosen not to interrupt, while a button
+    /// that does nothing is broken.
+    ///
+    /// Deliberately not gated on `successfulSaveCount` or on the once-per-version
+    /// rule. Those exist to stop the app asking people who have not been asked
+    /// to be asked. Someone who went into Settings and pressed this has asked.
+    static func rate(_ request: RequestReviewAction) -> URL? {
+        guard hasAllowanceLeft else { return writeReviewURL }
+        spendAllowance()
+        request()
+        return nil
+    }
+
 
     /// The marketing version, which is what the store listing calls this build.
     ///
