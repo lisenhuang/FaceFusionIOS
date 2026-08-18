@@ -33,8 +33,8 @@ import os
 
 enum UpdateChecker {
 
-    /// The App Store record shared by the platform targets.
-    private static let appStoreID = "6797135085"
+    /// The App Store record shared by the platform targets. The id itself
+    /// lives in `AppStoreLink`, which the Rate and Share buttons also build on.
     private static let appBundleID = "com.lisenhuang.morphiqo"
 
     /// What the store is selling, on the occasions it is ahead of us.
@@ -134,7 +134,7 @@ enum UpdateChecker {
 
     private static func lookup(country: String?) async -> Update? {
         var components = URLComponents(string: "https://itunes.apple.com/lookup")
-        var items = [URLQueryItem(name: "id", value: appStoreID),
+        var items = [URLQueryItem(name: "id", value: AppStoreLink.id),
                      URLQueryItem(name: "entity", value: "software")]
         if let country { items.append(URLQueryItem(name: "country", value: country)) }
         components?.queryItems = items

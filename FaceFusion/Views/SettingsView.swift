@@ -608,6 +608,24 @@ struct SettingsView: View {
             } label: {
                 Label("Rate Morphiqo", systemImage: "star")
             }
+
+            // `ShareLink` here, where the studio shares a render through
+            // `UIActivityViewController` by hand. That one has to know whether
+            // the share actually completed, because a completed share counts
+            // towards a review prompt, and `ShareLink` never reports back.
+            // Nothing turns on the outcome of this one, so the plain version is
+            // the right one.
+            //
+            // The link is the Universal Purchase record, not an iPhone-specific
+            // page, so whoever opens it gets the build for the device they
+            // opened it on — a Mac user sent this from an iPhone lands on the
+            // Mac app. `subject` is verbatim because a product name is the same
+            // in every language and does not belong in the string catalog.
+            ShareLink(item: AppStoreLink.listing,
+                      subject: Text(verbatim: "Morphiqo"),
+                      message: Text("Face swapping for photos and video that runs entirely on your own device — nothing is ever uploaded.")) {
+                Label("Share Morphiqo", systemImage: "square.and.arrow.up")
+            }
         } header: {
             Text("About")
         } footer: {
