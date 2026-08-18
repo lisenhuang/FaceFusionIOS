@@ -5,14 +5,17 @@
 //  Which language the interface speaks, and the machinery that lets an in-app
 //  choice override the system's.
 //
-//  The default path needs no code at all. The app ships `en`, `zh-Hans`,
-//  `zh-Hant`, `ko` and `ja`, with `en` as the development region, so iOS already
-//  resolves the right one: a Korean phone gets Korean, a Japanese phone gets
-//  Japanese, and a phone set to French — which the app does not speak — falls
-//  back to English. `zh-Hant` exists purely so that a Traditional Chinese device
-//  lands on Simplified rather than on English; its `.lproj` is a copy of
-//  `zh-Hans`. That mirroring also fixes the app's *name* on the Home Screen,
-//  which SpringBoard resolves long before any of this code runs.
+//  The default path needs no code at all. The app ships `en`, `de`, `es`, `fr`,
+//  `it`, `ja`, `ko`, `pt-BR`, `zh-Hans` and `zh-Hant`, with `en` as the
+//  development region, so iOS already resolves the right one: a Korean phone
+//  gets Korean, a German phone gets German, and a phone set to a language the
+//  app does not speak falls back to English. Regional variants resolve to the
+//  language they belong to, which is why one `es` covers Spain and Latin America
+//  alike and `pt-BR` also answers a phone set to European Portuguese.
+//  `zh-Hant` exists purely so that a Traditional Chinese device lands on
+//  Simplified rather than on English; its `.lproj` is a copy of `zh-Hans`. That
+//  mirroring also fixes the app's *name* on the Home Screen, which SpringBoard
+//  resolves long before any of this code runs.
 //
 //  Overriding that choice from inside the app is the part that needs work, and
 //  it needs doing twice, because two unrelated mechanisms resolve strings:
@@ -50,6 +53,11 @@ enum AppLanguage: String, CaseIterable, Identifiable, Sendable {
     case simplifiedChinese = "zh-Hans"
     case korean = "ko"
     case japanese = "ja"
+    case german = "de"
+    case spanish = "es"
+    case french = "fr"
+    case italian = "it"
+    case brazilianPortuguese = "pt-BR"
 
     var id: String { rawValue }
 
@@ -62,11 +70,16 @@ enum AppLanguage: String, CaseIterable, Identifiable, Sendable {
     /// that describes a behaviour rather than naming a language.
     var label: String {
         switch self {
-        case .system:            return String(localized: "System", bundle: .uiLanguage)
-        case .english:           return "English"
-        case .simplifiedChinese: return "简体中文"
-        case .korean:            return "한국어"
-        case .japanese:          return "日本語"
+        case .system:             return String(localized: "System", bundle: .uiLanguage)
+        case .english:            return "English"
+        case .simplifiedChinese:  return "简体中文"
+        case .korean:             return "한국어"
+        case .japanese:           return "日本語"
+        case .german:             return "Deutsch"
+        case .spanish:            return "Español"
+        case .french:             return "Français"
+        case .italian:            return "Italiano"
+        case .brazilianPortuguese: return "Português"
         }
     }
 

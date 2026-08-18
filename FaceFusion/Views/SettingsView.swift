@@ -184,7 +184,7 @@ struct SettingsView: View {
 
     private var languageSection: some View {
         Section {
-            // A menu rather than a segmented control: five options, three of
+            // A menu rather than a segmented control: ten options, three of
             // them in scripts whose glyphs do not abbreviate.
             Picker("Language", selection: $preferences.language) {
                 ForEach(AppLanguage.allCases) { language in
