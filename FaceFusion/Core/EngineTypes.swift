@@ -155,16 +155,40 @@ struct EngineConfiguration: Codable, Sendable {
     /// Where Core ML may cache the models it compiles from the ONNX graphs.
     var modelCacheDirectory: String
     var compute: ComputePolicy
+    /// Per-model exceptions to `compute`, empty by default.
+    ///
+    /// One `MLComputeUnits` for all six graphs is a single answer to a question
+    /// that has more than one: the detector and the identity encoder are small
+    /// and land well on the Neural Engine, while the swapper and the restorer
+    /// are convolutional generators it largely rejects. Splitting them lets two
+    /// units work at once instead of contending for one.
+    ///
+    /// Shipping empty is deliberate. Which model wants which unit is a
+    /// measurement, not a deduction, and an empty dictionary reproduces exactly
+    /// the behaviour of the single policy it generalises. The instrument is the
+    /// macOS app's `--benchmark` sweep, which has entries for these splits;
+    /// there is nothing on the phone that can measure them, so a verdict
+    /// reached on desktop silicon has to be re-checked here before it is
+    /// written in. Defaulted inline as well as in the initialiser so that a
+    /// configuration persisted by an older build still decodes.
+    var computeOverrides: [ModelID: ComputePolicy] = [:]
     var tuning: EngineTuning
 
     init(modelPaths: [ModelID: String],
          modelCacheDirectory: String,
          compute: ComputePolicy = .automatic,
+         computeOverrides: [ModelID: ComputePolicy] = [:],
          tuning: EngineTuning = EngineTuning()) {
         self.modelPaths = modelPaths
         self.modelCacheDirectory = modelCacheDirectory
         self.compute = compute
+        self.computeOverrides = computeOverrides
         self.tuning = tuning
+    }
+
+    /// The policy one model should load under.
+    func compute(for id: ModelID) -> ComputePolicy {
+        computeOverrides[id] ?? compute
     }
 }
 

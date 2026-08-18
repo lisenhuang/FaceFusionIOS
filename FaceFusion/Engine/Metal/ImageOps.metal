@@ -338,3 +338,104 @@ kernel void paste_back(device uchar *dst [[buffer(0)]],
     existing.xyz = uchar3(clamp(round(blended), 0.0f, 255.0f));
     row[p.originX + gid.x] = existing;
 }
+
+// MARK: - pack_tensor_hwc
+
+struct PackHWCParams {
+    uint width, height, srcRowBytes;
+};
+
+/// `FaceOccluder.inputTensor`: channels-last, BGR, plain 1/255 with no mean
+/// subtraction.
+///
+/// Channels-last because that graph was exported from TensorFlow and kept the
+/// layout, which is why this cannot go through `pack_tensor` — the only
+/// difference is where each of the three values lands, and the arithmetic per
+/// value is identical, so this one is bit-for-bit rather than within-a-bit.
+kernel void pack_tensor_hwc(device const uchar *src [[buffer(0)]],
+                            device float *dst [[buffer(1)]],
+                            constant PackHWCParams &p [[buffer(2)]],
+                            uint2 gid [[thread_position_in_grid]])
+{
+    if (gid.x >= p.width || gid.y >= p.height) { return; }
+
+    device const uchar4 *row = (device const uchar4 *)(src + gid.y * p.srcRowBytes);
+    uchar4 pixel = row[gid.x];
+
+    uint out = (gid.y * p.width + gid.x) * 3;
+    dst[out]     = float(pixel.x) * kInverseByteScale;
+    dst[out + 1] = float(pixel.y) * kInverseByteScale;
+    dst[out + 2] = float(pixel.z) * kInverseByteScale;
+}
+
+// MARK: - mask_warp
+
+struct MaskWarpParams {
+    uint srcWidth, srcHeight;
+    uint dstWidth, dstHeight;
+    Affine inverse;
+};
+
+/// `FloatMask.warped`. Uses the same `sample_mask` the paste-back kernel does,
+/// which is the point: a mask sampled two different ways would put the seam in
+/// two different places depending on which path ran.
+kernel void mask_warp(device const float *src [[buffer(0)]],
+                      device float *dst [[buffer(1)]],
+                      constant MaskWarpParams &p [[buffer(2)]],
+                      uint2 gid [[thread_position_in_grid]])
+{
+    if (gid.x >= p.dstWidth || gid.y >= p.dstHeight) { return; }
+
+    dst[gid.y * p.dstWidth + gid.x] =
+        sample_mask(src, p.srcWidth, p.srcHeight, p.inverse,
+                    float(gid.x) + 0.5f, float(gid.y) + 0.5f);
+}
+
+// MARK: - mask_blur
+
+struct MaskBlurParams {
+    uint width, height;
+    uint radius;
+    uint horizontal;   // 1 along x, 0 along y
+};
+
+/// One pass of `FloatMask.blurred`'s separable Gaussian.
+///
+/// By far the most expensive thing the CPU was still doing per face per frame:
+/// the restorer's 512x512 mask at the default feather is a ~150-tap kernel in
+/// each direction, which is twenty-odd million multiply-adds a frame.
+///
+/// The weights are computed on the CPU and handed in, so both paths use
+/// bit-identical coefficients, and the accumulation runs in the same order —
+/// ascending tap index into one running float — so the two agree to within a
+/// contracted multiply-add. Edge handling is a clamp, as it is there; note that
+/// this is *not* the same as OpenCV's default border for `GaussianBlur`, but it
+/// is what the validated Swift implementation does and that is the reference.
+kernel void mask_blur(device const float *src [[buffer(0)]],
+                      device float *dst [[buffer(1)]],
+                      device const float *weights [[buffer(2)]],
+                      constant MaskBlurParams &p [[buffer(3)]],
+                      uint2 gid [[thread_position_in_grid]])
+{
+    if (gid.x >= p.width || gid.y >= p.height) { return; }
+
+    int taps = int(p.radius) * 2 + 1;
+    int radius = int(p.radius);
+    float sum = 0.0f;
+
+    if (p.horizontal != 0) {
+        int limit = int(p.width) - 1;
+        for (int k = 0; k < taps; ++k) {
+            int sx = clamp(int(gid.x) + k - radius, 0, limit);
+            sum += src[gid.y * p.width + uint(sx)] * weights[k];
+        }
+    } else {
+        int limit = int(p.height) - 1;
+        for (int k = 0; k < taps; ++k) {
+            int sy = clamp(int(gid.y) + k - radius, 0, limit);
+            sum += src[uint(sy) * p.width + gid.x] * weights[k];
+        }
+    }
+
+    dst[gid.y * p.width + gid.x] = sum;
+}

@@ -50,13 +50,32 @@ final class MetalContext {
               let queue = device.makeCommandQueue() else { return nil }
         self.device = device
         self.queue = queue
-        self.library = device.makeDefaultLibrary()
+        self.library = Self.loadLibrary(device)
 
         if library == nil {
             EngineLog.metal.error("Metal shader library unavailable — pixel work stays on the CPU")
         } else {
             EngineLog.metal.notice("Metal ready on \(device.name, privacy: .public)")
         }
+    }
+
+    /// The shader library that shipped beside this class.
+    ///
+    /// `makeDefaultLibrary()` resolves against `Bundle.main`, which is the
+    /// wrong bundle in exactly one situation and it is the one that matters:
+    /// under `xcodebuild test` the main bundle is
+    /// whatever is hosting the tests, which is not guaranteed to be the bundle
+    /// holding the kernels — and a parity suite that silently found no library
+    /// would compare the CPU against itself and pass without ever having run a
+    /// kernel. So the bundle is named
+    /// explicitly, from the class itself, and `makeDefaultLibrary()` is kept
+    /// only as a fallback for anything that manages to load this code from
+    /// somewhere without a resource bundle of its own.
+    private static func loadLibrary(_ device: MTLDevice) -> MTLLibrary? {
+        if let library = try? device.makeDefaultLibrary(bundle: Bundle(for: MetalContext.self)) {
+            return library
+        }
+        return device.makeDefaultLibrary()
     }
 
     /// Shared storage: on Apple Silicon the CPU and GPU address the same

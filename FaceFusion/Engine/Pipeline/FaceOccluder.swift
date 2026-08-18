@@ -62,6 +62,14 @@ struct FaceOccluder {
                                                 y: CGFloat(size) / CGFloat(crop.height)),
                           width: size, height: size)
 
+        // Same arithmetic per value, only a different destination index, so
+        // this one is bit-for-bit rather than within-a-bit. Worth moving
+        // because it runs twice per face per frame over 65k pixels.
+        if let ops = MetalImageOps.active, resized.mtlBuffer != nil,
+           let fast = ops.packTensorHWC(resized) {
+            return fast
+        }
+
         let tensor = FloatTensor(shape: [1, size, size, 3])
         let values = tensor.values
         let invScale: Float = 1.0 / 255.0

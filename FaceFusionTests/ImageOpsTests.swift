@@ -190,6 +190,32 @@ struct TensorPackingTests {
     }
 }
 
+/// A mask with a hard edge and a ramp, so a blur that is subtly wrong has
+/// somewhere to show it and a warp cannot hide a half-pixel shift.
+private func testMask(width: Int, height: Int) -> FloatMask {
+    var mask = FloatMask(width: width, height: height)
+    for y in 0 ..< height {
+        for x in 0 ..< width {
+            let inside = x > width / 5 && x < width * 4 / 5
+                      && y > height / 5 && y < height * 4 / 5
+            mask.values[y * width + x] = inside
+                ? Float(x + y) / Float(width + height)
+                : 0
+        }
+    }
+    return mask
+}
+
+/// Largest element difference between two masks of the same size.
+private func maximumDifference(_ a: FloatMask, _ b: FloatMask) -> Float {
+    guard a.width == b.width, a.height == b.height else { return .greatestFiniteMagnitude }
+    var worst: Float = 0
+    for i in 0 ..< min(a.values.count, b.values.count) {
+        worst = max(worst, abs(a.values[i] - b.values[i]))
+    }
+    return worst
+}
+
 // MARK: - GPU agreement
 
 /// Every one of these is skipped rather than failed when Metal is unavailable:
@@ -379,6 +405,78 @@ struct MetalParityTests {
         }
         let worst = results.withLock { $0.max() ?? 255 }
         #expect(worst <= 1, "concurrent warps disagreed by up to \(worst)")
+    }
+
+    /// The separable Gaussian is the largest single piece of arithmetic in a
+    /// frame and the one most likely to drift, because it accumulates a
+    /// hundred-and-fifty terms into one running float. Both paths run the taps
+    /// in ascending order over identical weights, so what is left is a
+    /// contracted multiply-add and nothing else.
+    @Test func maskBlurMatchesTheCPU() throws {
+        try #require(ops != nil, "Metal unavailable")
+        for (size, sigma) in [(128, Float(5)), (256, Float(5)), (512, Float(19))] {
+            let mask = testMask(width: size, height: size)
+            let gpu = mask.blurred(sigma: sigma)
+            let cpu = MetalImageOps.withGPUDisabled { mask.blurred(sigma: sigma) }
+            #expect(gpu.width == cpu.width && gpu.height == cpu.height)
+            let delta = maximumDifference(gpu, cpu)
+            #expect(delta < 1e-5, "\(size)px at sigma \(sigma) differs by \(delta)")
+        }
+    }
+
+    /// The occluder resizes its mask to the crop before feathering it, so this
+    /// runs on the path that decides where a hand stops being painted over.
+    @Test func maskWarpMatchesTheCPU() throws {
+        try #require(ops != nil, "Metal unavailable")
+        let mask = testMask(width: 256, height: 256)
+
+        for (name, size) in [("upscale to 512", 512), ("downscale to 128", 128)] {
+            let transform = CGAffineTransform(scaleX: CGFloat(size) / 256,
+                                              y: CGFloat(size) / 256)
+            let gpu = mask.warped(by: transform, width: size, height: size)
+            let cpu = MetalImageOps.withGPUDisabled {
+                mask.warped(by: transform, width: size, height: size)
+            }
+            let delta = maximumDifference(gpu, cpu)
+            #expect(delta < 1e-5, "\(name) differs by \(delta)")
+        }
+    }
+
+    /// Channels-last packing is the same multiply per value as the CHW kernel
+    /// and only writes it somewhere else, so unlike the warps this one should
+    /// agree exactly rather than nearly.
+    @Test func occluderTensorPackMatchesTheCPU() throws {
+        try #require(ops != nil, "Metal unavailable")
+        let crop = testImage(width: FaceOccluder.inputSize, height: FaceOccluder.inputSize)
+
+        let gpu = FaceOccluder.inputTensor(from: crop)
+        let cpu = MetalImageOps.withGPUDisabled { FaceOccluder.inputTensor(from: crop) }
+
+        #expect(gpu.shape == cpu.shape)
+        var worst: Float = 0
+        for index in 0 ..< min(gpu.count, cpu.count) {
+            worst = max(worst, abs(gpu.values[index] - cpu.values[index]))
+        }
+        #expect(worst == 0, "channels-last pack differs by \(worst); it should be exact")
+    }
+
+    /// The frame copy is a blit rather than a kernel, so unlike everything else
+    /// here it must agree exactly. It is also the one path that runs on a
+    /// full-size frame, where a stride mismatch between a padded owned buffer
+    /// and a borrowed surface would show up as a shear rather than as noise.
+    @Test func frameCopyIsExact() throws {
+        try #require(ops != nil, "Metal unavailable")
+        // Above `minimumCopyPixels`, or the blit declines and this proves
+        // nothing about it.
+        let source = testImage(width: 1920, height: 1080)
+
+        let gpu = BGRAImage(width: 1920, height: 1080)
+        let cpu = BGRAImage(width: 1920, height: 1080)
+        source.copyContents(into: gpu)
+        MetalImageOps.withGPUDisabled { source.copyContents(into: cpu) }
+
+        #expect(maximumDifference(gpu, cpu) == 0, "blit and memcpy disagree")
+        #expect(maximumDifference(gpu, source) == 0, "the copy is not the original")
     }
 }
 

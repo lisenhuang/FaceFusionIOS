@@ -420,7 +420,7 @@ final class SwapPipeline {
                 throw makeEngineNSError(.modelMissing, underlying: "no path for \(id.rawValue)")
             }
             do {
-                try runtime.load(id, path: path, compute: config.compute,
+                try runtime.load(id, path: path, compute: config.compute(for: id),
                                  cacheDirectory: config.modelCacheDirectory,
                                  tuning: config.tuning)
             } catch {
@@ -449,7 +449,7 @@ final class SwapPipeline {
             guard let path = config.modelPaths[id],
                   FileManager.default.fileExists(atPath: path) else { continue }
             do {
-                try runtime.load(id, path: path, compute: config.compute,
+                try runtime.load(id, path: path, compute: config.compute(for: id),
                                  cacheDirectory: config.modelCacheDirectory,
                                  tuning: config.tuning)
             } catch {

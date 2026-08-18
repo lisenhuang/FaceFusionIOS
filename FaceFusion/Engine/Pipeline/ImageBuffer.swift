@@ -106,6 +106,15 @@ final class BGRAImage {
 
     func copyContents(into destination: BGRAImage) {
         precondition(destination.width == width && destination.height == height)
+
+        // A copy, not arithmetic: the blit moves the same bytes the `memcpy`
+        // below would, so there is nothing here for the two paths to disagree
+        // about. What it buys is the CPU time — 33 MB a frame at 4K — on a core
+        // the export loop wants for decode and encode.
+        if let ops = MetalImageOps.active, ops.copy(self, into: destination) {
+            return
+        }
+
         let bytes = min(width, destination.width) * 4
         for y in 0 ..< height {
             memcpy(destination.row(y), row(y), bytes)
@@ -541,6 +550,15 @@ struct FloatMask {
         }
         for i in 0 ..< size { kernel[i] /= total }
 
+        // Comfortably the most expensive thing left on the CPU per frame: the
+        // restorer's 512x512 mask at the default feather is a ~150-tap kernel
+        // in each direction. The weights are handed over rather than recomputed
+        // so both paths use the same coefficients to the bit.
+        if let ops = MetalImageOps.active,
+           let fast = ops.blurMask(self, weights: kernel, radius: radius) {
+            return fast
+        }
+
         var horizontal = [Float](repeating: 0, count: values.count)
         for y in 0 ..< height {
             for x in 0 ..< width {
@@ -570,6 +588,12 @@ struct FloatMask {
     /// Warps the mask with the same conventions as `BGRAImage.drawWarped`,
     /// sampling bilinearly and clamping at the edges.
     func warped(by transform: CGAffineTransform, width outWidth: Int, height outHeight: Int) -> FloatMask {
+        if let ops = MetalImageOps.active,
+           let fast = ops.warpMask(self, transform: transform,
+                                   width: outWidth, height: outHeight) {
+            return fast
+        }
+
         var out = FloatMask(width: outWidth, height: outHeight)
         let inverse = transform.inverted()
         let maxX = Float(width - 1), maxY = Float(height - 1)
