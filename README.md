@@ -237,9 +237,11 @@ Photos or Files. Nothing is uploaded, and swapping works with the network off.
 
 ## Subscriptions
 
-`Services/StoreManager.swift` owns StoreKit. Three products today —
-`…pro.monthly`, `…pro.annual`, `…pro.lifetime` — with the two subscriptions in
-App Store Connect group `22293440`.
+`Services/StoreManager.swift` owns StoreKit. Four product ids are declared —
+`…pro.weekly`, `…pro.monthly`, `…pro.annual`, `…pro.lifetime` — with the
+subscriptions in App Store Connect group `22293440`. The weekly is declared
+ahead of its creation in the dashboard; until it exists there,
+`Product.products(for:)` simply never returns it and nothing shows it.
 
 **The paywall and the entitlement gate read from two different places, and that
 is the thing to know before touching any of this.**
@@ -247,19 +249,23 @@ is the thing to know before touching any of this.**
 - `Views/PaywallView.swift` renders `SubscriptionStoreView(groupID:)`, which
   asks the App Store for *every* subscription in the group that is for sale. It
   does not consult `StoreManager` at all.
-- `StoreManager.refreshEntitlements()` grants Pro only when a verified
-  transaction's `productID` appears in `StoreManager.productIDs` — a hardcoded
-  array.
+- `StoreManager.refreshEntitlements()` grants Pro when a verified transaction
+  passes `grantsPro`: its `productID` appears in `StoreManager.productIDs`, or
+  it is an auto-renewable in group `22293440` — whether or not this build has
+  heard of it.
 
 So App Store Connect decides what is *sold*, and the binary decides what is
-*honoured*. A product added in the dashboard sells immediately, in builds
-already on people's phones, and unlocks nothing. There is no error and no
-crash: the user is charged and the app behaves as though they never subscribed.
+*honoured*. Before 1.13.0 the gate matched the hardcoded array alone, so a
+product added in the dashboard would sell immediately, in builds already on
+people's phones, and unlock nothing — no error, no crash: the user was charged
+and the app behaved as though they never subscribed. The group clause in
+`grantsPro` closes that for updated builds; older ones are still exposed, which
+is what the old-build hazard below is about.
 
 ### Plan: adding a weekly subscription
 
-The goal is to offer weekly and stop offering monthly and annual, without
-touching anyone who is already subscribed.
+The goal is to offer weekly alongside the existing plans without touching
+anyone who is already subscribed.
 
 Existing subscribers are safe by default. Entitlements come from
 `Transaction.currentEntitlements`, not from what the paywall shows, so a
@@ -268,16 +274,14 @@ The one way to break them is to *remove* `monthly`/`annual` from
 `productIDs` — that array is the entitlement allowlist, and dropping an id
 revokes Pro from people who are still paying. Add to it; never subtract.
 
-1. **Ship the binary first, before the product exists.**
-   Add `ProductID.weekly` and put it in `productIDs`. Safe to release ahead of
-   the product: `Product.products(for:)` simply does not return an id the store
-   does not know, and `SubscriptionStoreView` has nothing new to show. Nothing
-   changes for any user.
+1. ~~**Ship the binary first, before the product exists.**~~ **Done in 1.13.0.**
+   `ProductID.weekly` is declared and in `productIDs`, and `grantsPro` now also
+   honours any auto-renewable in group `22293440`, so a plan created in the
+   dashboard is entitled the day it appears rather than the day the next build
+   ships.
 
-   While here, make the gate resilient so this cannot recur: accept any
-   verified, unrevoked auto-renewable in group `22293440`, plus `lifetime`,
-   instead of matching a fixed list. Then a product added in the dashboard is
-   honoured the day it appears.
+   **This build has to be released and adopted before step 2**, which is the
+   whole point of the ordering.
 
 2. **Then create and submit the weekly in App Store Connect.**
    In group `22293440`, so it is a clean upgrade/downgrade against the existing
@@ -286,14 +290,19 @@ revokes Pro from people who are still paying. Add to it; never subtract.
    proration or deferred to the next renewal. A new in-app purchase can be
    submitted on its own; it does not need another binary.
 
-3. **Hide monthly and annual from the paywall.**
-   `SubscriptionStoreView(groupID:)` cannot do this — the group is the App
-   Store's list, not ours. Either switch to
-   `SubscriptionStoreView(productIDs:)` and name only what should be offered
+3. **Decide what the paywall offers.**
+   The current intent is to sell all four: weekly, monthly, annual and the
+   lifetime unlock. `SubscriptionStoreView(groupID:)` shows the three
+   subscriptions automatically once the weekly is on sale — no code change —
+   and `PaywallView` presents lifetime separately beside it.
+
+   If a plan should later stop being offered, `SubscriptionStoreView(groupID:)`
+   cannot hide it — the group is the App Store's list, not ours. Either switch
+   to `SubscriptionStoreView(productIDs:)` and name only what should be offered
    (client-side, reversible in a build, leaves the products purchasable for
-   anyone deep-linked to them), or mark them **Remove from Sale** in App Store
+   anyone deep-linked to them), or mark it **Remove from Sale** in App Store
    Connect (reversible, blocks new purchases everywhere, and means a lapsed
-   monthly subscriber cannot return to that plan).
+   subscriber cannot return to that plan).
 
    Do not delete the products in either case. Removal from sale is reversible;
    deletion is not, and the ids are still doing entitlement work.
@@ -301,9 +310,11 @@ revokes Pro from people who are still paying. Add to it; never subtract.
 ### The old-build hazard
 
 Shipping step 1 does not close the hole — it only covers people who update.
-Anyone still on an older binary will see the weekly the moment it is approved,
-because their `SubscriptionStoreView(groupID:)` reads the live group, and their
-copy of `productIDs` has never heard of it. They can be charged and get nothing.
+Anyone still on 1.12.0 or earlier will see the weekly the moment it is
+approved, because their `SubscriptionStoreView(groupID:)` reads the live group,
+their copy of `productIDs` has never heard of it, and their gate has no group
+clause. They can be charged and get nothing. **This is the reason not to create
+the weekly in App Store Connect until 1.13.0 is out and adopted.**
 
 `UpdateChecker` is advisory today — an alert with a "Not now" button — so there
 is no version floor to lean on. Three ways out, in the order worth considering:
