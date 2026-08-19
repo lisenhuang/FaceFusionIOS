@@ -130,6 +130,16 @@ struct StudioView: View {
         } message: {
             Text("Morphiqo is not allowed to add to your photo library. You can turn that on in Settings, under Morphiqo.")
         }
+        // Asked rather than refused: the app knows it saved this render once,
+        // but not whether the copy is still there — only the user does.
+        .alert("Already saved",
+               isPresented: Binding(get: { model.confirmsDuplicateSave },
+                                    set: { model.confirmsDuplicateSave = $0 })) {
+            Button("Save Again") { saveToPhotos(allowingDuplicate: true) }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Morphiqo has already saved this render to your photo library. If you deleted it there, you can save it again.")
+        }
         // A new render supersedes whatever the last one's buttons had to say.
         .onChange(of: finishedURL) { saveNotice = nil }
         .sheet(isPresented: $showsPaywall) {
@@ -943,19 +953,27 @@ struct StudioView: View {
         }
     }
 
+    /// The one path to the photo library, so the button and the duplicate-save
+    /// alert cannot drift apart.
+    ///
+    /// `saveFinishedToPhotos` reports whether a copy landed rather than leaving
+    /// this to infer it from `statusMessage` being empty — which was wrong the
+    /// moment a save could end by asking a question instead of failing.
+    private func saveToPhotos(allowingDuplicate: Bool = false) {
+        saveNotice = nil
+        isSavingToPhotos = true
+        Task {
+            let saved = await model.saveFinishedToPhotos(allowingDuplicate: allowingDuplicate)
+            isSavingToPhotos = false
+            if saved {
+                saveNotice = String(localized: "Saved to Photos.", bundle: .uiLanguage)
+            }
+        }
+    }
+
     private func saveToPhotosButton(fittingOneLine: Bool) -> some View {
         Button {
-            saveNotice = nil
-            isSavingToPhotos = true
-            Task {
-                await model.saveFinishedToPhotos()
-                isSavingToPhotos = false
-                // The model surfaces a refused permission or a failed write
-                // through `statusMessage`; silence there means it worked.
-                if model.statusMessage == nil {
-                    saveNotice = String(localized: "Saved to Photos.", bundle: .uiLanguage)
-                }
-            }
+            saveToPhotos()
         } label: {
             if isSavingToPhotos {
                 ProgressView().controlSize(.small)

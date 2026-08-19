@@ -1441,6 +1441,65 @@
         }
       }
     },
+    "Already saved" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bereits gesichert"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ya se guardó"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Déjà enregistré"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Già salvato"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "保存済みです"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이미 저장했습니다"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Já foi salvo"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已经存储过"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已经存储过"
+          }
+        }
+      }
+    },
     "An export is running. Models cannot be removed until it finishes." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -7365,6 +7424,65 @@
         }
       }
     },
+    "Morphiqo has already saved this render to your photo library. If you deleted it there, you can save it again." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Morphiqo hat dieses Ergebnis bereits in deiner Fotomediathek gesichert. Wenn du es dort gelöscht hast, kannst du es erneut sichern."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Morphiqo ya guardó este resultado en tu fototeca. Si lo eliminaste de ahí, puedes guardarlo otra vez."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Morphiqo a déjà enregistré ce résultat dans votre photothèque. Si vous l’y avez supprimé, vous pouvez l’enregistrer à nouveau."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Morphiqo ha già salvato questo risultato nella tua libreria foto. Se l’hai eliminato da lì, puoi salvarlo di nuovo."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Morphiqo はこの結果をすでに写真ライブラリに保存しています。そこから削除した場合は、もう一度保存できます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Morphiqo가 이 결과를 사진 보관함에 이미 저장했습니다. 거기서 삭제했다면 다시 저장할 수 있습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O Morphiqo já salvou este resultado na sua fototeca. Se você o apagou de lá, pode salvá-lo de novo."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "拟颜已将此结果存储到你的照片图库。如果你已将它删除，可以再次存储。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "拟颜已将此结果存储到你的照片图库。如果你已将它删除，可以再次存储。"
+          }
+        }
+      }
+    },
     "Morphiqo is not allowed to add to your photo library. You can turn that on in Settings, under Morphiqo." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -10923,6 +11041,65 @@
         }
       }
     },
+    "Save Again" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erneut sichern"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guardar otra vez"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enregistrer à nouveau"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Salva di nuovo"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "もう一度保存"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "다시 저장"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Salvar de novo"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "再次存储"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "再次存储"
+          }
+        }
+      }
+    },
     "Save to Files" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -12630,65 +12807,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "无法从你的照片图库读取该项目。"
-          }
-        }
-      }
-    },
-    "That render is already in your photo library." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Dieses Ergebnis ist bereits in deiner Fotomediathek."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ese resultado ya está en tu fototeca."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ce rendu se trouve déjà dans votre photothèque."
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Quel risultato è già nella tua libreria foto."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "この書き出し結果はすでに写真ライブラリにあります。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "이 결과물은 이미 사진 보관함에 있습니다."
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Essa renderização já está na sua fototeca."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "该导出结果已在你的照片图库中。"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "该导出结果已在你的照片图库中。"
           }
         }
       }

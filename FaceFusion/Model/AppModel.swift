@@ -277,6 +277,11 @@ final class AppModel {
     /// describes a message still owed to the user, not a fact about the job.
     var photosPermissionDenied = false
 
+    /// Raised when Save to Photos was asked for a render this app has already
+    /// copied there, so the view can ask whether a second copy is wanted.
+    /// Settable from outside for the same reason as the flag above.
+    var confirmsDuplicateSave = false
+
     /// Rises when a save or a share succeeded *and* `ReviewPrompt` decided this
     /// is a moment worth asking about the app at.
     ///
@@ -1283,16 +1288,28 @@ final class AppModel {
     /// Add-only permission is asked for at this point rather than at launch: it
     /// is the first moment the request means anything, and a prompt that
     /// arrives with a finished video behind it explains itself.
-    func saveFinishedToPhotos() async {
+    /// Returns whether a copy actually landed in the library, so the caller can
+    /// report success without having to infer it from the absence of an error
+    /// message.
+    @discardableResult
+    func saveFinishedToPhotos(allowingDuplicate: Bool = false) async -> Bool {
         guard purchases.isPro else {
             statusMessage = String(localized: "Saving and sharing results is a Pro feature. Upgrade to continue.", bundle: .uiLanguage)
-            return
+            return false
         }
-        guard case .finished(let url) = phase else { return }
-        guard !isSavingToPhotos else { return }
-        guard !finishedIsInPhotos else {
-            statusMessage = String(localized: "That render is already in your photo library.", bundle: .uiLanguage)
-            return
+        guard case .finished(let url) = phase else { return false }
+        guard !isSavingToPhotos else { return false }
+        if !allowingDuplicate && finishedIsInPhotos {
+            // `finishedIsInPhotos` records that *this app* put a copy there.
+            // It cannot know the user has deleted it since: finding out would
+            // need read access to the library, and this app asks only to add —
+            // which is a privacy promise worth more than the convenience.
+            //
+            // So the question goes to the one party who can answer it, rather
+            // than refusing a save the user may well want. `Cancel` is the
+            // safe default and a second copy is one tap away.
+            confirmsDuplicateSave = true
+            return false
         }
 
         isSavingToPhotos = true
@@ -1307,14 +1324,14 @@ final class AppModel {
             // dismissed one a moment ago, and stacking a second on top of it
             // to argue is exactly the behaviour that earns a one-star review.
             statusMessage = String(localized: "Morphiqo needs permission to add to your photo library. You can grant it in Settings, or save to Files instead.", bundle: .uiLanguage)
-            return
+            return false
         case .blocked:
             // Nothing was shown and nothing happened, so from the user's side
             // the button is broken. This one is worth an alert, and it needs a
             // way to Settings because that is the only place it can be undone.
             statusMessage = String(localized: "Morphiqo needs permission to add to your photo library. You can grant it in Settings, or save to Files instead.", bundle: .uiLanguage)
             photosPermissionDenied = true
-            return
+            return false
         }
         do {
             if targetIsImage {
@@ -1325,8 +1342,10 @@ final class AppModel {
             finishedIsInPhotos = true
             statusMessage = String(localized: "Saved to your photo library.", bundle: .uiLanguage)
             noteSuccessfulSaveOrShare()
+            return true
         } catch {
             statusMessage = error.localizedDescription
+            return false
         }
     }
 

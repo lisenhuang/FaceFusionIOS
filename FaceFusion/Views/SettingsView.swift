@@ -86,16 +86,19 @@ struct SettingsView: View {
                     Button("Done") { dismiss() }
                 }
             }
-            .confirmationDialog(confirmationTitle,
-                                isPresented: Binding(get: { pending != nil },
-                                                     set: { if !$0 { pending = nil } }),
-                                titleVisibility: .visible,
-                                presenting: pending) { removal in
-                Button {
+            // An alert, not a confirmation dialog. Both ask the same question,
+            // but a confirmation dialog is an action sheet, and on iPhone iOS
+            // always slides one up from the bottom edge — there is no anchoring
+            // API for it there, so in a list this long the question arrives a
+            // long way from the row that asked it. An alert lands in the middle
+            // of a dimmed screen, which is as near the tap as the system
+            // allows, and it reads as the interruption a removal deserves.
+            .alert(confirmationTitle,
+                   isPresented: Binding(get: { pending != nil },
+                                        set: { if !$0 { pending = nil } }),
+                   presenting: pending) { removal in
+                Button("Remove", role: .destructive) {
                     Task { await remove(removal) }
-                } label: {
-                    Text("Remove")
-                        .foregroundStyle(.secondary)
                 }
                 Button("Cancel", role: .cancel) { }
             } message: { removal in
