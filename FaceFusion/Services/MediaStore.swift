@@ -191,29 +191,47 @@ enum MediaStore {
 
     // MARK: - Photos
 
-    /// True once the app may add to the photo library, asking for permission if
-    /// the question has not been put yet.
+    /// The answer to "may the app add to the photo library", asking if the
+    /// question has not been put yet.
     ///
-    /// The status is checked before requesting because `requestAuthorization`
-    /// on an already-denied status returns immediately without showing
-    /// anything: the user turned it off in Settings and only Settings can turn
-    /// it back on. A caller that treats `false` as "the sheet was dismissed"
-    /// leaves them with a button that does nothing, which is why the error
-    /// below says where to go.
-    static func requestAddPermission() async -> Bool {
+    /// Three cases rather than a Bool, because the two refusals are different
+    /// situations and a caller that cannot tell them apart gets one of them
+    /// wrong. See `AddPermission`.
+    enum AddPermission {
+        /// Allowed — either already, or the user has just said yes.
+        case granted
+        /// The system prompt was shown, now, and the user declined it. They
+        /// have made a choice this second; explaining it back to them is
+        /// nagging, and the prompt is still available next time.
+        case declined
+        /// Off before the tap. `requestAuthorization` returns immediately
+        /// without showing anything in this state, so from the user's side the
+        /// button simply did nothing — this is the case that has to be
+        /// explained, and Settings is the only place it can be undone.
+        case blocked
+    }
+
+    /// The status is checked before requesting precisely to separate `declined`
+    /// from `blocked`: once denied, `requestAuthorization` never shows the
+    /// prompt again, and a caller treating that as "the sheet was dismissed"
+    /// leaves the user with a button that does nothing.
+    static func requestAddPermission() async -> AddPermission {
         switch PHPhotoLibrary.authorizationStatus(for: .addOnly) {
         case .authorized, .limited:
             // `.limited` is a read-access concept and is not expected here, but
             // it does grant adding, so treat it as a yes rather than refusing
             // on a status nobody has looked at.
-            return true
+            return .granted
         case .notDetermined:
             let granted = await PHPhotoLibrary.requestAuthorization(for: .addOnly)
-            return granted == .authorized || granted == .limited
+            return granted == .authorized || granted == .limited ? .granted : .declined
         case .denied, .restricted:
-            return false
+            // `.restricted` cannot be changed by the user at all — a managed
+            // device or Screen Time decided it. Settings is still where they
+            // would go to find that out, so it is not worth a fourth case.
+            return .blocked
         @unknown default:
-            return false
+            return .blocked
         }
     }
 
@@ -241,7 +259,7 @@ enum MediaStore {
         guard FileManager.default.fileExists(atPath: url.path) else {
             throw SaveError.missingFile
         }
-        guard await requestAddPermission() else {
+        guard await requestAddPermission() == .granted else {
             throw SaveError.notPermitted
         }
 

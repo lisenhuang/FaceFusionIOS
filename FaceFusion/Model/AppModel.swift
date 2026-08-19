@@ -1298,11 +1298,20 @@ final class AppModel {
         isSavingToPhotos = true
         defer { isSavingToPhotos = false }
 
-        guard await MediaStore.requestAddPermission() else {
-            // A refusal that only Settings can undo needs somewhere to go, not
-            // just something to read. `StudioView` turns this into an alert
-            // with a button that opens Settings; the message stays for after
-            // the alert is dismissed.
+        switch await MediaStore.requestAddPermission() {
+        case .granted:
+            break
+        case .declined:
+            // The system prompt was just shown and turned down. Say where the
+            // decision lives in case it was a misfire, but no alert: the user
+            // dismissed one a moment ago, and stacking a second on top of it
+            // to argue is exactly the behaviour that earns a one-star review.
+            statusMessage = String(localized: "Morphiqo needs permission to add to your photo library. You can grant it in Settings, or save to Files instead.", bundle: .uiLanguage)
+            return
+        case .blocked:
+            // Nothing was shown and nothing happened, so from the user's side
+            // the button is broken. This one is worth an alert, and it needs a
+            // way to Settings because that is the only place it can be undone.
             statusMessage = String(localized: "Morphiqo needs permission to add to your photo library. You can grant it in Settings, or save to Files instead.", bundle: .uiLanguage)
             photosPermissionDenied = true
             return
