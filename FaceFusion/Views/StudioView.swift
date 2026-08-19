@@ -98,18 +98,37 @@ struct StudioView: View {
             Task { await model.handleDrop(url) }
             return true
         }
-        .fileExporter(isPresented: Binding(
-                        get: { isSavingToFiles && purchases.isPro },
-                        set: { isSavingToFiles = $0 }
-                      ),
-                      item: finishedURL.map(ExportedFile.init),
-                      defaultFilename: finishedURL?.lastPathComponent) { result in
-            switch result {
-            case .success:
-                saveNotice = "Saved to Files."
-            case .failure(let error):
-                saveNotice = error.localizedDescription
+        // Presented by hand rather than through `.fileExporter`. See
+        // `DocumentExporter` for why. Guarded on the file so the picker is
+        // never asked to export something that is not there.
+        .sheet(isPresented: Binding(
+                get: { isSavingToFiles && purchases.isPro && finishedURL != nil },
+                set: { isSavingToFiles = $0 }
+              )) {
+            if let url = finishedURL {
+                DocumentExporter(url: url) { saved in
+                    isSavingToFiles = false
+                    if saved {
+                        saveNotice = String(localized: "Saved to Files.", bundle: .uiLanguage)
+                    }
+                }
+                .ignoresSafeArea()
             }
+        }
+        // Only Settings can undo a refused photo-library permission, so this is
+        // an alert with a way there rather than a caption the user cannot act
+        // on. `AppModel` raises the flag; the route out belongs to the view.
+        .alert("Photos access is off",
+               isPresented: Binding(get: { model.photosPermissionDenied },
+                                    set: { model.photosPermissionDenied = $0 })) {
+            Button("Open Settings") {
+                if let url = URL(string: UIApplication.openSettingsURLString) {
+                    UIApplication.shared.open(url)
+                }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Morphiqo is not allowed to add to your photo library. You can turn that on in Settings, under Morphiqo.")
         }
         // A new render supersedes whatever the last one's buttons had to say.
         .onChange(of: finishedURL) { saveNotice = nil }
@@ -606,6 +625,28 @@ struct StudioView: View {
     private var canvas: some View {
         PreviewCanvas()
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .overlay(alignment: .bottomLeading) {
+                if compareFloats && model.previewResult != nil {
+                    compareButton
+                        .padding(12)
+                }
+            }
+    }
+
+    /// Where the before/after toggle goes.
+    ///
+    /// Beside the slider there is room for it on a wide layout, but not on a
+    /// narrow one: two timecodes and a bordered button leave a 393 pt phone
+    /// about 110 pt of slider, which is not enough to land on a frame. So on
+    /// compact width it floats over the canvas instead and the slider gets the
+    /// row to itself. Bottom *leading* deliberately — `PreviewCanvas` puts its
+    /// zoom-reset capsule bottom-trailing, and that one appears exactly when
+    /// somebody is zoomed in comparing a swap.
+    ///
+    /// Not at accessibility sizes: the label becomes large enough there to
+    /// cover a face, so it returns to its own line under the slider.
+    private var compareFloats: Bool {
+        horizontalSizeClass == .compact && !dynamicTypeSize.isAccessibilitySize
     }
 
     /// A photo has no timeline, but it still earns the before/after toggle —
@@ -614,7 +655,8 @@ struct StudioView: View {
         @Bindable var model = model
 
         let timeline = model.targetInfo.flatMap { $0.durationSeconds > 0 ? $0 : nil }
-        let canCompare = model.previewResult != nil
+        // Floating over the canvas already, so the row must not place it twice.
+        let canCompare = model.previewResult != nil && !compareFloats
         // At accessibility sizes the toggle's label is a line of its own, so it
         // goes under the slider rather than squeezing it to nothing.
         let compareBelow = dynamicTypeSize.isAccessibilitySize
@@ -659,17 +701,37 @@ struct StudioView: View {
     /// The deliberate version of the compare gesture. Pressing and holding the
     /// canvas does the same thing without leaving the picture; this one stays
     /// put, which is what you want when the difference is subtle.
+    @ViewBuilder
     private var compareButton: some View {
-        Button {
-            model.showsOriginal.toggle()
-        } label: {
-            Label(model.showsOriginal ? "Showing original" : "Showing result",
-                  systemImage: model.showsOriginal ? "eye.slash" : "eye")
-                .font(.caption)
+        if compareFloats {
+            // Over the picture there is no control background to sit on, so it
+            // brings the same material capsule the canvas uses for zoom-reset.
+            Button {
+                model.showsOriginal.toggle()
+            } label: {
+                compareLabel
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 7)
+                    .background(.ultraThinMaterial, in: .capsule)
+            }
+            .buttonStyle(.plain)
+            .accessibilityHint("Compare with the untouched frame")
+        } else {
+            Button {
+                model.showsOriginal.toggle()
+            } label: {
+                compareLabel
+            }
+            .buttonStyle(.bordered)
+            .controlSize(.small)
+            .accessibilityHint("Compare with the untouched frame")
         }
-        .buttonStyle(.bordered)
-        .controlSize(.small)
-        .accessibilityHint("Compare with the untouched frame")
+    }
+
+    private var compareLabel: some View {
+        Label(model.showsOriginal ? "Showing original" : "Showing result",
+              systemImage: model.showsOriginal ? "eye.slash" : "eye")
+            .font(.caption)
     }
 
     // MARK: - Action bar
@@ -890,7 +952,9 @@ struct StudioView: View {
                 isSavingToPhotos = false
                 // The model surfaces a refused permission or a failed write
                 // through `statusMessage`; silence there means it worked.
-                if model.statusMessage == nil { saveNotice = "Saved to Photos." }
+                if model.statusMessage == nil {
+                    saveNotice = String(localized: "Saved to Photos.", bundle: .uiLanguage)
+                }
             }
         } label: {
             if isSavingToPhotos {
@@ -975,23 +1039,54 @@ struct StudioView: View {
 
 // MARK: - Handing the file to the system
 
-/// A finished render, in the form `.fileExporter` understands.
+/// The export picker, wrapped for the same reason `ShareSheet` below is.
 ///
-/// A file *reference* rather than `Data`, deliberately: a two-minute export is
-/// several hundred megabytes and `SentTransferredFile` hands the system a path,
-/// so the copy into the user's chosen folder happens outside this process's
-/// address space. Loading it into memory to hand it back is exactly the kind of
-/// thing that gets an app jetsammed while it is doing the user a favour.
+/// This replaced `.fileExporter`, which reached the same picker by way of a
+/// `Transferable` whose `FileRepresentation` carried the render — and which
+/// crashed the app on the way there. Handing `UIDocumentPickerViewController`
+/// a URL removes every step that could have been the one at fault: there is no
+/// transfer representation to resolve, no content type to infer from a wrapper
+/// serving both an MP4 and a PNG, and no filename for the picker and the
+/// representation to disagree about.
 ///
-/// The content type is `.data` because one wrapper serves both an MP4 and a PNG,
-/// and the exporter takes the name — and therefore the extension — from
-/// `defaultFilename`.
-private struct ExportedFile: Transferable {
+/// A file *reference* rather than `Data`, as before: a two-minute export is
+/// several hundred megabytes, and `asCopy` has the system duplicate it into the
+/// chosen folder outside this process's address space. Loading it into memory
+/// to hand it over is the kind of thing that gets an app jetsammed while it is
+/// doing the user a favour.
+///
+/// `asCopy: true` also protects the file the user is still looking at — the
+/// same reason `MediaStore.addToLibrary` copies rather than moves. Save to
+/// Files, Save to Photos and Share all read the one render, in any order.
+private struct DocumentExporter: UIViewControllerRepresentable {
     let url: URL
+    let onFinish: (Bool) -> Void
 
-    static var transferRepresentation: some TransferRepresentation {
-        FileRepresentation(exportedContentType: .data) { file in
-            SentTransferredFile(file.url)
+    func makeUIViewController(context: Context) -> UIDocumentPickerViewController {
+        let controller = UIDocumentPickerViewController(forExporting: [url], asCopy: true)
+        controller.delegate = context.coordinator
+        return controller
+    }
+
+    func updateUIViewController(_ controller: UIDocumentPickerViewController,
+                                context: Context) {}
+
+    func makeCoordinator() -> Coordinator { Coordinator(onFinish: onFinish) }
+
+    final class Coordinator: NSObject, UIDocumentPickerDelegate {
+        private let onFinish: (Bool) -> Void
+
+        init(onFinish: @escaping (Bool) -> Void) {
+            self.onFinish = onFinish
+        }
+
+        func documentPicker(_ controller: UIDocumentPickerViewController,
+                            didPickDocumentsAt urls: [URL]) {
+            onFinish(true)
+        }
+
+        func documentPickerWasCancelled(_ controller: UIDocumentPickerViewController) {
+            onFinish(false)
         }
     }
 }

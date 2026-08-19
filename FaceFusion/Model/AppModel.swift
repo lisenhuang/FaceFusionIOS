@@ -269,6 +269,14 @@ final class AppModel {
     private(set) var isSavingToPhotos = false
     private(set) var finishedIsInPhotos = false
 
+    /// Raised when a save was refused because add-only access is off, and
+    /// lowered by the view once it has shown the way to Settings.
+    ///
+    /// Settable from outside, unlike its neighbours here, because an alert's
+    /// `isPresented` binding has to be able to put it back down — the flag
+    /// describes a message still owed to the user, not a fact about the job.
+    var photosPermissionDenied = false
+
     /// Rises when a save or a share succeeded *and* `ReviewPrompt` decided this
     /// is a moment worth asking about the app at.
     ///
@@ -1291,7 +1299,12 @@ final class AppModel {
         defer { isSavingToPhotos = false }
 
         guard await MediaStore.requestAddPermission() else {
+            // A refusal that only Settings can undo needs somewhere to go, not
+            // just something to read. `StudioView` turns this into an alert
+            // with a button that opens Settings; the message stays for after
+            // the alert is dismissed.
             statusMessage = String(localized: "Morphiqo needs permission to add to your photo library. You can grant it in Settings, or save to Files instead.", bundle: .uiLanguage)
+            photosPermissionDenied = true
             return
         }
         do {
