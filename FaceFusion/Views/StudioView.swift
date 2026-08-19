@@ -848,6 +848,47 @@ struct StudioView: View {
     }
 
     private var renderingBar: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            // Only for video. A photo is one frame and is finished before a
+            // person could leave the app if they wanted to.
+            if !model.targetIsImage { stayOnScreenNotice }
+            renderingProgressRow
+        }
+    }
+
+    /// The one thing a person can do to make a render finish sooner, put where
+    /// they are already looking.
+    ///
+    /// Worth the space it takes because the alternative is invisible: iOS hands
+    /// the video encoder to the foreground app only, so an export whose app is
+    /// switched away from stops dead. It survives that now — the file is closed
+    /// and reopened where it left off — but "pauses until you come back" is
+    /// still a worse outcome than not leaving, and it is the sort of thing a
+    /// user will only learn by losing ten minutes to it once.
+    private var stayOnScreenNotice: some View {
+        HStack(alignment: .firstTextBaseline, spacing: 8) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .foregroundStyle(.orange)
+                .accessibilityHidden(true)
+            Text("Keep Morphiqo on screen. Leaving the app pauses the export until you come back.")
+                .font(.footnote.weight(.semibold))
+                .fixedSize(horizontal: false, vertical: true)
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background {
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .fill(Color.orange.opacity(0.14))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .strokeBorder(Color.orange.opacity(0.45), lineWidth: 1)
+                }
+        }
+    }
+
+    private var renderingProgressRow: some View {
         AdaptiveStack(axis: dynamicTypeSize.isAccessibilitySize ? .vertical : .horizontal,
                       horizontalAlignment: .leading,
                       verticalAlignment: .center,

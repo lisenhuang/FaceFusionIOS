@@ -412,6 +412,20 @@ final class EngineClient {
 
     private(set) var state: State = .idle
 
+    /// True from the moment a memory warning made the engine hand the optional
+    /// models back until it has been asked to load them again.
+    ///
+    /// The summary in `state` cannot answer this, and deliberately so: it
+    /// records the set the sessions were *built* from, and the unload happens
+    /// on the engine's own queue between frames without rewriting it. So a
+    /// caller asking "is the enhancer loaded" gets `true` from a summary
+    /// describing a session that no longer exists. This flag is the other
+    /// question — "has anything been dropped that a `prepare` would bring
+    /// back" — and it is the one the export's resume path needs, because
+    /// picking a render up again with the enhancer missing would put a visible
+    /// seam in the middle of the video at exactly the frame the user left.
+    private(set) var optionalModelsDropped = false
+
     /// The library's side of the recovery is bound here, at the one place that
     /// owns both: `ModelManager`'s statics know where the record and the model
     /// files are, and the engine only knows the directory it was handed.
@@ -448,6 +462,9 @@ final class EngineClient {
                                              compute: compute,
                                              tuning: tuning)
             let result = try await engine.prepare(config)
+            // Whatever a memory warning took, this call has just asked for it
+            // back; the summary below is now the truth again.
+            optionalModelsDropped = false
             state = .ready(EnginePreparationSummary(
                 executionProvider: result.executionProvider,
                 usingCoreML: result.usingCoreML,
@@ -504,6 +521,13 @@ final class EngineClient {
     /// the render — see `SwapPipeline.memoryPressureUnloadOptional()`.
     func handleMemoryPressure() {
         EngineLog.client.notice("memory warning: asking the engine to release optional models")
+        // Raised here rather than from inside the engine, and without waiting
+        // to hear whether anything was actually resident: the engine answers
+        // the warning on its own queue, and a flag that only went up after a
+        // round trip would still be down at the moment the resume path reads
+        // it. Raising it when there was nothing to drop costs one `prepare`
+        // that finds every session already loaded and returns.
+        optionalModelsDropped = true
         engine.handleMemoryPressure()
     }
 

@@ -10,8 +10,8 @@
 //  macOS and iOS — the reader, the writer, the composition that bakes in
 //  rotation and the audio passthrough are the same code.
 //
-//  Three things do change, and all three are consequences of the hardware
-//  rather than of the framework:
+//  Four things do change, and all four are consequences of the platform rather
+//  than of the framework:
 //
 //  - Frames are handed to the engine as `CVPixelBuffer`s. In-process there is
 //    no boundary to pass an IOSurface across, so there is nothing to unwrap.
@@ -21,6 +21,12 @@
 //    export runs and only ever ratchets down from where it started.
 //  - The idle timer is held off. A ten-minute render on a locked screen is a
 //    ten-minute render that gets suspended partway through.
+//  - The export is written in segments and can pause. iOS takes the hardware
+//    codecs away from an app that is no longer in front, so leaving the app
+//    closes the file rather than corrupting it, and returning opens a new one
+//    where the last left off. `ExportSuspension` explains the constraint; the
+//    seam is joined without re-encoding. An export nobody interrupts is still
+//    a single segment and a single pass.
 //
 
 import Foundation
@@ -210,8 +216,36 @@ enum VideoPipeline {
     }
 
     /// Reads every frame, hands it to the engine, and writes the result.
+    ///
+    /// No longer one pass, and the reason is the platform rather than the
+    /// pipeline. iOS revokes the hardware codecs the moment the app stops being
+    /// the foreground app, so a render that is still going when the user checks
+    /// a message does not merely slow down — the reader and the writer are torn
+    /// down under it, and what is left on disk is an MP4 with no index, which is
+    /// not a shorter video, it is not a video. No background mode exempts a
+    /// compute job from that and no entitlement buys one.
+    ///
+    /// So leaving the app *ends a segment* rather than ending the export. The
+    /// frames inside the engine are dropped, the file is closed while there is
+    /// still background time to close it, and coming back opens a new one at the
+    /// frame after the last that reached disk. `join` puts the pieces together
+    /// at the end without re-encoding anything.
+    ///
+    /// An export nobody interrupts is still exactly one segment, still carries
+    /// the audio the way it always did, and reaches its destination by being
+    /// renamed rather than copied. Nothing about the file a user gets changes
+    /// unless they left the app — and then what changes is that they get one.
+    ///
+    /// `onResume` is called after each pause, before any frame is decoded again.
+    /// It exists for one thing: a memory warning almost certainly arrived while
+    /// the app was on its way out or on its way back, because a suspended export
+    /// holding half a gigabyte of weights is the most jetsam-worthy thing on the
+    /// device, and answering one costs the enhancer and the occluder. Picking up
+    /// without them would put a visible change of quality in the middle of the
+    /// video, at exactly the frame the user left.
     static func export(_ request: ExportRequest,
                        engine: EngineClient,
+                       onResume: (@MainActor @Sendable () async -> Void)? = nil,
                        progress: @escaping @MainActor (ExportProgress) -> Void) async throws {
 
         // Renders are long and the user has no reason to keep touching the
@@ -220,8 +254,130 @@ enum VideoPipeline {
         // thrown error and a cancellation — a `defer` cannot await, so the
         // restore is a hop rather than a call, which is fine: nothing depends
         // on it having happened by the time `export` returns.
+        //
+        // This stops the screen locking. It cannot stop the user pressing Home,
+        // which is what the monitor below is for.
         await MainActor.run { UIApplication.shared.isIdleTimerDisabled = true }
         defer { Task { @MainActor in UIApplication.shared.isIdleTimerDisabled = false } }
+
+        let monitor = await MainActor.run { ExportSuspensionMonitor() }
+        let suspension = monitor.state
+        defer { Task { @MainActor in monitor.stop() } }
+
+        // Removed however this ends — finished, cancelled or thrown. A segment
+        // is worthless to anything but the export that wrote it.
+        let workspace = MediaStore.makeSegmentWorkspace()
+        defer { MediaStore.removeSegmentWorkspace(workspace) }
+
+        let totalFrames = try await inspect(request.source).estimatedFrameCount
+
+        /// Finished pieces, in playing order.
+        var segments: [URL] = []
+        /// Source time of the last frame that reached disk; the next segment
+        /// picks up after it.
+        var writtenThrough: CMTime?
+        var framesWritten = 0
+        var throughput: Double = 0
+
+        while true {
+            let url = workspace.appendingPathComponent("segment-\(segments.count).mp4")
+            let piece = try await writeSegment(
+                request: request,
+                engine: engine,
+                to: url,
+                // Only the first piece carries the audio, and only because an
+                // export nobody interrupts is then already the finished file.
+                // Once there is a join to do, the audio is taken off the source
+                // in one go and whatever this wrote is ignored.
+                withAudio: segments.isEmpty,
+                startingAfter: writtenThrough,
+                totalFrames: totalFrames,
+                framesAlreadyWritten: framesWritten,
+                throughputSoFar: throughput,
+                suspension: suspension,
+                progress: progress)
+
+            framesWritten = piece.framesWritten
+            throughput = piece.throughput
+
+            if let end = piece.writtenThrough {
+                segments.append(url)
+                writtenThrough = end
+            } else {
+                // Nothing landed: the app left before a single frame came back
+                // out of the engine, or the file could not be closed in the time
+                // left. There is no piece here, and the next attempt starts from
+                // wherever this one was asked to.
+                try? FileManager.default.removeItem(at: url)
+            }
+
+            guard piece.wasInterrupted else { break }
+
+            EngineLog.engine.notice(
+                "export paused at \(framesWritten)/\(totalFrames) frames with \(segments.count) segment(s) on disk")
+
+            // The file is closed. Holding the assertion for however long the
+            // user is away is how an app gets killed for holding one too long.
+            await MainActor.run { monitor.checkpointFinished() }
+
+            try await suspension.waitForForeground()
+            try Task.checkCancellation()
+            await onResume?()
+
+            EngineLog.engine.notice("export resumed at \(framesWritten)/\(totalFrames) frames")
+        }
+
+        guard !segments.isEmpty else {
+            throw MediaError.writerFailed(
+                String(localized: "No frames could be read from this video.", bundle: .uiLanguage))
+        }
+
+        if segments.count == 1 {
+            // The ordinary path. The piece already is the export, audio and all,
+            // so this is a rename within one temporary directory rather than
+            // half a gigabyte of copying.
+            if FileManager.default.fileExists(atPath: request.destination.path) {
+                try FileManager.default.removeItem(at: request.destination)
+            }
+            try FileManager.default.moveItem(at: segments[0], to: request.destination)
+        } else {
+            try await join(segments, audioFrom: request.source, into: request.destination)
+        }
+
+        let finalProgress = ExportProgress(framesWritten: framesWritten,
+                                           totalFrames: max(totalFrames, framesWritten),
+                                           framesPerSecond: throughput,
+                                           facesSwappedInLastFrame: 0)
+        await MainActor.run { progress(finalProgress) }
+    }
+
+    /// What one uninterrupted stretch of an export produced.
+    private struct SegmentOutcome {
+        /// Source time of the last frame that reached the file, or nil when the
+        /// segment produced nothing worth keeping — in which case the caller
+        /// deletes it and starts the next one from the same place.
+        var writtenThrough: CMTime?
+        /// True when the app left the foreground, false when the video ended.
+        var wasInterrupted: Bool
+        /// Cumulative across the whole export, not across this segment, because
+        /// it is what the progress bar shows.
+        var framesWritten: Int
+        var throughput: Double
+    }
+
+    /// One stretch of frames, from `startingAfter` until either the video ends
+    /// or the app leaves the foreground.
+    private static func writeSegment(request: ExportRequest,
+                                     engine: EngineClient,
+                                     to destination: URL,
+                                     withAudio: Bool,
+                                     startingAfter: CMTime?,
+                                     totalFrames: Int,
+                                     framesAlreadyWritten: Int,
+                                     throughputSoFar: Double,
+                                     suspension: ExportSuspensionState,
+                                     progress: @escaping @MainActor (ExportProgress) -> Void
+    ) async throws -> SegmentOutcome {
 
         let asset = AVURLAsset(url: request.source)
         guard let videoTrack = try await asset.loadTracks(withMediaType: .video).first else {
@@ -241,6 +397,14 @@ enum VideoPipeline {
         let needsComposition = !preferredTransform.isIdentity
 
         let reader = try AVAssetReader(asset: asset)
+        if let startingAfter {
+            // Decoding restarts here rather than at zero. The reader begins at
+            // the sync sample at or before this time and drops what precedes the
+            // range, and the loop below drops anything at or before the frame
+            // already written, so the seam is exactly one frame wide and no
+            // frame is written twice.
+            reader.timeRange = CMTimeRange(start: startingAfter, duration: .positiveInfinity)
+        }
         let videoOutputSettings: [String: Any] = [
             kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA,
             kCVPixelBufferIOSurfacePropertiesKey as String: [:] as CFDictionary,
@@ -265,10 +429,10 @@ enum VideoPipeline {
         reader.add(videoOutput)
 
         // Writer
-        if FileManager.default.fileExists(atPath: request.destination.path) {
-            try FileManager.default.removeItem(at: request.destination)
+        if FileManager.default.fileExists(atPath: destination.path) {
+            try FileManager.default.removeItem(at: destination)
         }
-        let writer = try AVAssetWriter(outputURL: request.destination, fileType: .mp4)
+        let writer = try AVAssetWriter(outputURL: destination, fileType: .mp4)
 
         // An export must not say what made it. Empty is already the default, so
         // this asserts the invariant rather than changing behaviour: it is the
@@ -320,24 +484,42 @@ enum VideoPipeline {
         // Every input must be attached before writing starts — `AVAssetWriter`
         // refuses `add(_:)` afterwards. The samples are pumped later, once the
         // frames are done.
-        let audio = try await AudioPassthrough.attach(to: writer, from: asset)
+        let audio = withAudio ? try await AudioPassthrough.attach(to: writer, from: asset) : nil
 
         guard writer.startWriting() else {
             throw MediaError.writerFailed(writer.error?.localizedDescription
                                           ?? "The encoder refused to start.")
         }
+        // Every segment is a clip in its own right, starting at zero, so the
+        // frames below are written at their offset from the first one this
+        // segment kept rather than at their time in the source. A segment whose
+        // timeline began at ten seconds would need an edit list to describe, and
+        // the join would then have to reason about one.
         writer.startSession(atSourceTime: .zero)
         guard reader.startReading() else {
             throw MediaError.readerFailed(reader.error?.localizedDescription
                                           ?? "The decoder refused to start.")
         }
 
-        let totalFrames = try await inspect(request.source).estimatedFrameCount
-        var framesWritten = 0
+        var framesInSegment = 0
+        /// Counted separately from `framesInSegment` because it is what paces
+        /// the thermal check below: frames go in bursts of `depth` and come out
+        /// one at a time, so counting the ones that came out would ask the same
+        /// question several times while the queue fills and not at all while it
+        /// drains.
         var framesSubmitted = 0
         var lastReport = Date()
         var framesSinceReport = 0
-        var throughput: Double = 0
+        var throughput = throughputSoFar
+
+        /// Source time of this segment's first kept frame, and of its last.
+        var segmentStart: CMTime?
+        var lastWritten: CMTime?
+        /// How long the final frame should be held for, which the join needs to
+        /// know so the seam does not gain or lose a frame's worth of time.
+        /// Measured between written frames, with the track's nominal rate only
+        /// as the seed for a segment that writes exactly one.
+        var frameDuration = CMTime(seconds: 1 / frameRate, preferredTimescale: 600)
 
         // Frames in the engine, oldest first. Submitting several keeps the GPU
         // and CPU stages of different frames overlapping; draining in FIFO
@@ -351,6 +533,10 @@ enum VideoPipeline {
             var sample: CMSampleBuffer
         }
         var inFlight: [InFlight] = []
+
+        /// Whether a drain put a frame in the file, or gave up because the app
+        /// is on its way out.
+        enum Drain { case wrote, interrupted }
 
         // The starting depth is the ceiling for the whole run. Throttling can
         // only lower it and cooling can only return it to here — a device that
@@ -378,21 +564,45 @@ enum VideoPipeline {
         }
 
         /// Waits for the oldest frame and writes it.
-        func drainOldest() async throws {
-            guard !inFlight.isEmpty else { return }
+        func drainOldest() async throws -> Drain {
+            guard !inFlight.isEmpty else { return .wrote }
             let item = inFlight.removeFirst()
-            let result = try await item.task.value
+
+            let result: SwapResult
+            do {
+                result = try await item.task.value
+            } catch {
+                // A frame that failed while the app is leaving failed *because*
+                // the app is leaving: the GPU refuses command buffers submitted
+                // from the background, and Core ML goes with it. Reporting that
+                // as a broken render would be reporting the pause as a fault.
+                if suspension.isBackgrounded { return .interrupted }
+                throw error
+            }
 
             while !writerInput.isReadyForMoreMediaData {
                 try Task.checkCancellation()
+                if suspension.isBackgrounded { return .interrupted }
                 try await Task.sleep(nanoseconds: 2_000_000)
             }
-            if !adaptor.append(item.output, withPresentationTime: item.time) {
+
+            let base = segmentStart ?? item.time
+            if !adaptor.append(item.output, withPresentationTime: item.time - base) {
+                // Same reasoning as above, and this is the likelier of the two:
+                // the encoder is a VideoToolbox session living in another
+                // process, and it is taken away the moment the app is no longer
+                // in front.
+                if suspension.isBackgrounded { return .interrupted }
                 throw MediaError.writerFailed(writer.error?.localizedDescription
                                               ?? "A frame could not be encoded.")
             }
+            if segmentStart == nil { segmentStart = base }
+            if let previous = lastWritten, item.time > previous {
+                frameDuration = item.time - previous
+            }
+            lastWritten = item.time
 
-            framesWritten += 1
+            framesInSegment += 1
             framesSinceReport += 1
 
             let elapsed = Date().timeIntervalSince(lastReport)
@@ -404,19 +614,32 @@ enum VideoPipeline {
                 lastReport = Date()
                 framesSinceReport = 0
 
-                let snapshot = ExportProgress(framesWritten: framesWritten,
+                let snapshot = ExportProgress(framesWritten: framesAlreadyWritten + framesInSegment,
                                               totalFrames: totalFrames,
                                               framesPerSecond: throughput,
                                               facesSwappedInLastFrame: result.facesSwapped)
                 await MainActor.run { progress(snapshot) }
             }
+            return .wrote
         }
 
-        while let sample = videoOutput.copyNextSampleBuffer() {
-            try Task.checkCancellation()
+        var interrupted = false
 
+        submitting: while true {
+            try Task.checkCancellation()
+            // Asked once per frame rather than waited on, so the export stops
+            // feeding the encoder within a frame of the app being told it is
+            // going away — while there is still background time to close the
+            // file with.
+            if suspension.isBackgrounded { interrupted = true; break }
+
+            guard let sample = videoOutput.copyNextSampleBuffer() else { break }
             guard let input = CMSampleBufferGetImageBuffer(sample) else { continue }
             let presentationTime = CMSampleBufferGetPresentationTimeStamp(sample)
+
+            // Resuming lands on the sync sample before the frame we want, so
+            // the frames between it and the seam arrive again and are dropped.
+            if let startingAfter, presentationTime <= startingAfter { continue }
 
             let width = CVPixelBufferGetWidth(input)
             let height = CVPixelBufferGetHeight(input)
@@ -464,36 +687,220 @@ enum VideoPipeline {
             // shrink underneath a queue that is already deeper than it: one
             // drain per frame would only ever converge back to the old depth.
             while inFlight.count >= depth {
-                try await drainOldest()
+                if try await drainOldest() == .interrupted {
+                    interrupted = true
+                    break submitting
+                }
             }
         }
 
-        while !inFlight.isEmpty {
-            try Task.checkCancellation()
-            try await drainOldest()
+        // Whatever is still in the engine is finished and written — unless the
+        // app is leaving, in which case it is dropped. Encoding three more
+        // frames from the background is exactly the thing that cannot be done,
+        // and redoing them on the way back costs a fraction of a second.
+        if !interrupted {
+            while !inFlight.isEmpty {
+                try Task.checkCancellation()
+                if try await drainOldest() == .interrupted { interrupted = true; break }
+            }
+        }
+        for item in inFlight { item.task.cancel() }
+        inFlight.removeAll()
+
+        if !interrupted, reader.status == .failed {
+            // The decoder is a VideoToolbox session too, and it is revoked on
+            // the same rule as the encoder. `AVError.operationInterrupted` here
+            // means the app lost the foreground between the loop's last check
+            // and now, which is a pause rather than a broken video.
+            if suspension.isBackgrounded {
+                interrupted = true
+            } else {
+                throw MediaError.readerFailed(reader.error?.localizedDescription
+                                              ?? "Decoding stopped unexpectedly.")
+            }
         }
 
-        if reader.status == .failed {
-            throw MediaError.readerFailed(reader.error?.localizedDescription
-                                          ?? "Decoding stopped unexpectedly.")
+        // Usually finished long ago — audio passthrough is far cheaper than the
+        // frames — but its failures still have to surface here, except when the
+        // segment is being abandoned and the audio will be taken off the source
+        // at the join instead.
+        if interrupted {
+            audioTask?.cancel()
+            _ = try? await audioTask?.value
+        } else {
+            try await audioTask?.value
         }
+
+        guard let segmentStart, let lastWritten else {
+            // Not one frame reached the file. There is no segment to keep and
+            // nothing for the caller to advance past.
+            writer.cancelWriting()
+            return SegmentOutcome(writtenThrough: nil,
+                                  wasInterrupted: interrupted,
+                                  framesWritten: framesAlreadyWritten,
+                                  throughput: throughput)
+        }
+
         writerInput.markAsFinished()
 
-        // Usually finished long ago — audio passthrough is far cheaper than
-        // the frames — but its failures still have to surface here.
-        try await audioTask?.value
+        // Pinning the end matters for a piece that is going to be joined: the
+        // join reads each file's duration to know where the next one starts, and
+        // a writer left to infer it can hold the last frame for a different
+        // length than the rest. The one case that must *not* be pinned is a
+        // complete first segment, whose audio track legitimately runs a little
+        // past the last video frame — ending the session at the video's end
+        // would cut it off, which is a regression on the path nothing went
+        // wrong on.
+        if interrupted || !withAudio {
+            writer.endSession(atSourceTime: lastWritten - segmentStart + frameDuration)
+        }
 
         await writer.finishWriting()
-        if writer.status == .failed {
+        if writer.status != .completed {
+            // Closing the file is the one piece of work that has to happen after
+            // the app has already been told to go, and the assertion that buys
+            // time for it can expire. Losing the segment costs the frames in it,
+            // not the export: the caller starts the next one from where this one
+            // was asked to begin.
+            if interrupted {
+                EngineLog.engine.error(
+                    "could not close the paused export segment, rendering it again: \(writer.error?.localizedDescription ?? "unknown", privacy: .public)")
+                writer.cancelWriting()
+                return SegmentOutcome(writtenThrough: nil,
+                                      wasInterrupted: true,
+                                      framesWritten: framesAlreadyWritten,
+                                      throughput: throughput)
+            }
             throw MediaError.writerFailed(writer.error?.localizedDescription
                                           ?? "The file could not be finished.")
         }
 
-        let finalProgress = ExportProgress(framesWritten: framesWritten,
-                                           totalFrames: max(totalFrames, framesWritten),
-                                           framesPerSecond: throughput,
-                                           facesSwappedInLastFrame: 0)
-        await MainActor.run { progress(finalProgress) }
+        return SegmentOutcome(writtenThrough: lastWritten,
+                              wasInterrupted: interrupted,
+                              framesWritten: framesAlreadyWritten + framesInSegment,
+                              throughput: throughput)
+    }
+
+    /// Puts the pieces of a paused export back together.
+    ///
+    /// Nothing is re-encoded. The segments go into a composition end to end,
+    /// which is only a description of where the samples are, and a passthrough
+    /// export copies those samples into one file — so joining costs the time it
+    /// takes to read and write the bytes once, not the time it took to make
+    /// them.
+    ///
+    /// The audio comes off the original rather than out of the segments. Only
+    /// the first segment has any, it stops wherever the user happened to leave
+    /// the app, and re-reading one track from the source is both simpler and
+    /// exactly what the uninterrupted path does.
+    private static func join(_ segments: [URL],
+                             audioFrom source: URL,
+                             into destination: URL) async throws {
+
+        try Task.checkCancellation()
+        let composition = AVMutableComposition()
+        guard let videoTrack = composition.addMutableTrack(
+                withMediaType: .video, preferredTrackID: kCMPersistentTrackID_Invalid) else {
+            throw MediaError.writerFailed(
+                String(localized: "The paused export could not be joined back together.", bundle: .uiLanguage))
+        }
+
+        var cursor = CMTime.zero
+        for url in segments {
+            let piece = AVURLAsset(url: url)
+            guard let track = try await piece.loadTracks(withMediaType: .video).first else { continue }
+            // The *track's* range, emphatically not the asset's duration. An
+            // asset is as long as its longest track, and the first segment has
+            // an audio track that is very probably longer than its own video:
+            // the passthrough copies audio far faster than frames encode, so a
+            // pause ten seconds into a minute of footage leaves a segment
+            // holding ten seconds of pictures and most of a minute of sound.
+            // Advancing the cursor by that would put a gap the length of the
+            // difference in front of the next segment and drag the join out of
+            // sync with the audio laid down below.
+            let range = try await track.load(.timeRange)
+            guard range.duration > .zero else { continue }
+            try videoTrack.insertTimeRange(range, of: track, at: cursor)
+            cursor = cursor + range.duration
+        }
+
+        guard cursor > .zero else {
+            throw MediaError.writerFailed(
+                String(localized: "The paused export could not be joined back together.", bundle: .uiLanguage))
+        }
+
+        let original = AVURLAsset(url: source)
+        if let sourceAudio = try await original.loadTracks(withMediaType: .audio).first,
+           let audioTrack = composition.addMutableTrack(
+               withMediaType: .audio, preferredTrackID: kCMPersistentTrackID_Invalid) {
+            // Bounded by both: a source whose audio runs past its last frame
+            // must not lengthen the render, and a video whose frames outlast the
+            // audio must not ask for samples that are not there.
+            let span = CMTimeMinimum(try await original.load(.duration), cursor)
+            if span > .zero {
+                try audioTrack.insertTimeRange(CMTimeRange(start: .zero, duration: span),
+                                               of: sourceAudio, at: .zero)
+            }
+        }
+
+        if FileManager.default.fileExists(atPath: destination.path) {
+            try FileManager.default.removeItem(at: destination)
+        }
+
+        guard let session = AVAssetExportSession(asset: composition,
+                                                 presetName: AVAssetExportPresetPassthrough) else {
+            throw MediaError.writerFailed(
+                String(localized: "The paused export could not be joined back together.", bundle: .uiLanguage))
+        }
+        // The same invariant the writer asserts: an export must not say what
+        // made it. A passthrough session copies the source asset's metadata by
+        // default, and the source here is a composition of our own files, so
+        // there is nothing to copy — this is the line that keeps it that way.
+        session.metadata = []
+
+        if #available(iOS 18.0, *) {
+            try await session.export(to: destination, as: .mp4)
+        } else {
+            try await joinUsingDeprecatedExport(session, into: destination)
+        }
+    }
+
+    /// `exportAsynchronously` is the only way to run a session at this project's
+    /// deployment target, and is deprecated at the SDK it is built against.
+    ///
+    /// Marked deprecated itself so that calling it here is not a warning: the
+    /// annotation is a note that this function disappears when the deployment
+    /// target reaches 18, not a claim about the app.
+    @available(iOS, deprecated: 18.0,
+               message: "Superseded by AVAssetExportSession.export(to:as:).")
+    private static func joinUsingDeprecatedExport(_ session: AVAssetExportSession,
+                                                  into destination: URL) async throws {
+        session.outputURL = destination
+        session.outputFileType = .mp4
+        // `AVAssetExportSession` is not `Sendable` and the handler below is, so
+        // the capture has to be spelled out as deliberate. It is: `cancelExport`
+        // is the one method on the class meant to be called from somewhere other
+        // than where the export was started, and calling it is the documented
+        // way to stop one. The unsafety is in the type system, not in the call.
+        nonisolated(unsafe) let running = session
+        await withTaskCancellationHandler {
+            await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+                running.exportAsynchronously { continuation.resume() }
+            }
+        } onCancel: {
+            // Cancel arrives while the bytes are being copied. Without this the
+            // session runs to the end and the user who asked to stop is handed a
+            // finished video for their trouble.
+            running.cancelExport()
+        }
+        // Ahead of the status check so that a cancellation reads as one rather
+        // than as a join that failed for reasons nobody can act on.
+        try Task.checkCancellation()
+        guard session.status == .completed else {
+            throw MediaError.writerFailed(
+                session.error?.localizedDescription
+                ?? String(localized: "The paused export could not be joined back together.", bundle: .uiLanguage))
+        }
     }
 
     /// Carries the original audio track across untouched — no decode, no

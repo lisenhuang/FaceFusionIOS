@@ -453,8 +453,16 @@ final class AppModel {
         // does not fail when asked for one — the pipeline skips the stage. So
         // the question is not "is there an engine" but "is it running the models
         // that are actually installed"; when it is not, prepare again.
+        //
+        // `optionalModelsDropped` is the third question, and the summary cannot
+        // answer it either: a memory warning releases the enhancer and the
+        // occluder without rewriting the summary that says they are loaded, so
+        // without this clause the engine never picks them back up and the
+        // message the user was shown — that they return the next time the engine
+        // starts — is a promise nothing keeps.
         if case .ready(let summary) = engine.state,
-           Set(summary.loadedModels.compactMap(ModelID.init(rawValue:))) == wanted { return }
+           Set(summary.loadedModels.compactMap(ModelID.init(rawValue:))) == wanted,
+           !engine.optionalModelsDropped { return }
         do {
             // A second enhancer session lets two frames be restored at once
             // instead of queueing on one, which is worth roughly the enhancer's
@@ -530,6 +538,30 @@ final class AppModel {
     func handleMemoryWarning() {
         engine.handleMemoryPressure()
         statusMessage = String(localized: "Memory was running low, so detail enhancement and occlusion masking have been switched off. They return the next time the engine starts.", bundle: .uiLanguage)
+    }
+
+    /// Called by a paused export, once the app is on screen again and before it
+    /// decodes another frame.
+    ///
+    /// The two events are all but the same event. An export that is suspended
+    /// holds the frames it had in flight and half a gigabyte of weights, which
+    /// is the largest thing on the device the kernel can ask for back, so a
+    /// warning arrives on the way out or on the way in and the enhancer and the
+    /// occluder go with it. Resuming without them would restore the *frames*
+    /// faithfully and change how they look — a seam in the middle of the video
+    /// at exactly the point the user stepped away, which is the one place they
+    /// will look.
+    ///
+    /// `startEngineIfPossible` is the whole answer rather than something
+    /// narrower: with the configuration unchanged the runtime keeps every
+    /// session it still has and builds only the ones that went, so this reloads
+    /// two models rather than six, and the source identity and the checked
+    /// people — which came out of a recognizer session nothing here touches —
+    /// stay comparable with what the resumed frames produce.
+    func prepareToResumeExport() async {
+        guard engine.optionalModelsDropped else { return }
+        EngineLog.client.notice("export resuming: reloading the models a memory warning released")
+        await startEngineIfPossible()
     }
 
     // MARK: - Choosing media
@@ -1237,7 +1269,11 @@ final class AppModel {
                                                               destination: destination,
                                                               options: self.swapOptions,
                                                               useHEVC: self.useHEVC)
-                    try await VideoPipeline.export(request, engine: self.engine) { update in
+                    try await VideoPipeline.export(
+                        request,
+                        engine: self.engine,
+                        onResume: { [weak self] in await self?.prepareToResumeExport() }
+                    ) { update in
                         self.progress = update
                     }
                 }

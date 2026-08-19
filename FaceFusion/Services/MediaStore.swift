@@ -65,6 +65,33 @@ enum MediaStore {
         directory(named: "Imports")
     }
 
+    /// Where a paused export keeps the pieces it has finished.
+    ///
+    /// Separate from `exportsDirectory` because the two have opposite
+    /// lifetimes. A file in `Exports` is a finished render waiting for the user
+    /// to say where it goes, and deleting one loses work. A file in here is
+    /// half of a render that only the export that wrote it can use — worthless
+    /// to anybody the moment that export ends, and worthless *for good* if the
+    /// process died holding it, because nothing resumes across a launch.
+    ///
+    /// One sub-directory per export, so the whole thing can be removed with a
+    /// single call rather than by matching names.
+    static var segmentsDirectory: URL {
+        directory(named: "ExportSegments")
+    }
+
+    /// A private folder for one export's segments.
+    static func makeSegmentWorkspace() -> URL {
+        let url = segmentsDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try? FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
+        return url
+    }
+
+    /// Throws away one export's segments, however it ended.
+    static func removeSegmentWorkspace(_ url: URL) {
+        try? FileManager.default.removeItem(at: url)
+    }
+
     private static func directory(named name: String) -> URL {
         let url = FileManager.default.temporaryDirectory
             .appendingPathComponent(name, isDirectory: true)
@@ -129,7 +156,8 @@ enum MediaStore {
 
     private static let sweepState = OSAllocatedUnfairLock(initialState: SweepState())
 
-    /// Deletes renders and imports left behind by a previous launch.
+    /// Deletes renders, imports and abandoned export segments left behind by a
+    /// previous launch.
     ///
     /// Two guards, because this is called from `scenePhase` becoming `.active`
     /// and that happens every time the app returns to the foreground, not only
@@ -162,7 +190,7 @@ enum MediaStore {
         var removed = 0
         var reclaimed: Int64 = 0
 
-        for directory in [exportsDirectory, importsDirectory] {
+        for directory in [exportsDirectory, importsDirectory, segmentsDirectory] {
             let entries = (try? manager.contentsOfDirectory(
                 at: directory,
                 includingPropertiesForKeys: [.fileSizeKey],

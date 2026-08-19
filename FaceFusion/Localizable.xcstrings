@@ -6179,6 +6179,65 @@
         }
       }
     },
+    "Keep Morphiqo on screen. Leaving the app pauses the export until you come back." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lass Morphiqo im Vordergrund. Verlässt du die App, pausiert der Export, bis du zurückkommst."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mantén Morphiqo en pantalla. Si sales de la app, la exportación se pausa hasta que vuelvas."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gardez Morphiqo à l’écran. Si vous quittez l’app, l’exportation se met en pause jusqu’à votre retour."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tieni Morphiqo in primo piano. Se esci dall'app, l'esportazione si mette in pausa finché non torni."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Morphiqo を画面に表示したままにしてください。アプリを離れると、戻るまで書き出しが一時停止します。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Morphiqo를 화면에 켜 두세요. 앱을 벗어나면 돌아올 때까지 내보내기가 일시정지됩니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mantenha o Morphiqo na tela. Se você sair do app, a exportação pausa até você voltar."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请让 Morphiqo 保持在前台。离开 App 会暂停导出，回来后继续。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "請讓 Morphiqo 保持在前景。離開 App 會暫停匯出，回來後繼續。"
+          }
+        }
+      }
+    },
     "Keeps everything on the GPU and CPU. Worth trying if Automatic stutters." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -8128,6 +8187,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "未在目标中找到人脸。"
+          }
+        }
+      }
+    },
+    "No frames could be read from this video." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aus diesem Video konnten keine Einzelbilder gelesen werden."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo leer ningún fotograma de este vídeo."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucune image n’a pu être lue dans cette vidéo."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Non è stato possibile leggere alcun fotogramma da questo video."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "この動画からフレームを読み取れませんでした。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 동영상에서 프레임을 읽을 수 없습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não foi possível ler nenhum quadro deste vídeo."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法从这个视频中读取任何帧。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "無法從這部影片讀取任何影格。"
           }
         }
       }
@@ -13456,6 +13574,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "網路只用於一次性的模型下載，以及向 App Store 查詢版本號。換臉本身在完全沒有連線的情況下也能運作。"
+          }
+        }
+      }
+    },
+    "The paused export could not be joined back together." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der pausierte Export konnte nicht wieder zusammengefügt werden."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo volver a unir la exportación en pausa."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’exportation mise en pause n’a pas pu être réassemblée."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Non è stato possibile ricomporre l'esportazione in pausa."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "一時停止した書き出しを結合できませんでした。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "일시정지된 내보내기를 다시 합칠 수 없습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não foi possível juntar novamente a exportação pausada."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法将暂停的导出重新合并。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "無法將暫停的匯出重新合併。"
           }
         }
       }
