@@ -439,13 +439,13 @@ struct StudioView: View {
     private var adjustments: some View {
         VStack(alignment: .leading, spacing: 16) {
             SectionLabel("Settings")
-            // First, and above "Which face" rather than beside the other
-            // quality knobs, for a layout reason as much as a billing one:
-            // `faceSection` grows a whole scrollable list of people in `.chosen`
-            // mode, and anything under it goes off the bottom of a small screen
-            // exactly when the user is most likely to be tuning.
-            closeUpDetailPicker
+            // Who gets replaced, then how well — the order the question is
+            // actually asked in. Worth knowing that `faceSection` grows a whole
+            // list of people in `.chosen` mode, so in that one mode the detail
+            // picker sits below a tall block; it leads every other mode, which
+            // is where most of this app's use is.
             faceSection
+            closeUpDetailPicker
             resemblanceSlider
             edgeSoftnessSlider
             enhanceToggle
