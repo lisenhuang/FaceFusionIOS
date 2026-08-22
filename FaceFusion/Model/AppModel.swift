@@ -24,10 +24,11 @@
 //    chose in advance; the result bar then offers Photos, Files or Share.
 //  - Settings live in `Preferences` so they survive a relaunch, but they keep
 //    their names here and are forwarded, so the views read exactly as before.
-//  - The video preview decodes to a bounded long edge. A phone cannot afford a
-//    4K swap on every slider change, and it does not have to: the export
-//    re-runs the swap from the original file at full resolution, so nothing the
-//    user keeps is affected by what the preview chose to look at.
+//  - The video preview decodes to the same long edge the export is bounded to,
+//    and that agreement is load-bearing rather than incidental. `closeUpDetail`
+//    resolves per face from the footprint in the frame it is handed, so a
+//    preview decoded smaller would render a boost the export will not use and
+//    the setting would preview a picture nobody gets.
 //
 
 import Foundation
@@ -152,8 +153,13 @@ final class AppModel {
     ///
     /// Nothing in the geometry needs this: face boxes are in preview-frame
     /// pixels and the canvas normalises by the preview frame's own dimensions,
-    /// so the cap is invisible to the view layer. It is exposed so the studio
-    /// can say out loud that a preview is not the export.
+    /// so the cap is invisible to the view layer.
+    ///
+    /// Since the preview and the export bound themselves to the same long edge,
+    /// this is 1 for every video either leaves alone and equal for both when
+    /// they do not — so there is no longer a difference for the studio to say
+    /// out loud, which is what it was exposed for. Kept because it still
+    /// answers the question it names, and unread.
     var previewScale: Double {
         guard let target, !target.isImage else { return 1 }
         let longest = max(target.displaySize.width, target.displaySize.height)
@@ -419,9 +425,20 @@ final class AppModel {
     ///
     /// The largest of the faces that would be replaced, because that is the one
     /// setting the cost and the one the user is looking at. It answers with the
-    /// same function the engine uses, on the same landmarks, against a preview
-    /// frame now decoded to the export's own bound — so this is the number that
-    /// will be used, not an estimate of it.
+    /// same function the engine uses, against a preview frame decoded to the
+    /// export's own bound.
+    ///
+    /// Exact in `.chosen` mode, where `detectPreviewFaces` goes through
+    /// `analyzeFaces` and the faces carry the landmarker's refined points — the
+    /// same ones the swap will align on. In the other two modes it takes the
+    /// cheaper `detectFaces`, whose faces carry the detector's own five points,
+    /// and the swap then refines them. The two agree to within the landmarker's
+    /// correction, usually a few pixels, but `boost` is a step function: a face
+    /// whose refined footprint lands the other side of 147, 275 or 403 frame
+    /// pixels resolves one level away from what this names. So it is the number
+    /// that will be used except within a few pixels of a boundary, and it is a
+    /// caption rather than a contract — worth a landmarker pass per face per
+    /// scrub to close, which is not a trade a hint should make.
     var closeUpDetailInUse: Int? {
         let selected = selectedFaceIndices
         guard !selected.isEmpty else { return nil }

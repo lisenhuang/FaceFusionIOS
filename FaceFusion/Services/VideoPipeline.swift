@@ -192,11 +192,13 @@ enum VideoPipeline {
 
     /// The same exact seek, bounded to a long edge.
     ///
-    /// The preview on a phone does not need a 4K frame to show a face on a
-    /// 6-inch screen, and swapping one costs several times what swapping a
-    /// 1280px one does. The *export* still runs at full resolution — it decodes
-    /// through the reader below, not through this — so nothing the user keeps
-    /// is affected by what the preview decided to look at.
+    /// Callers pass `AppModel.previewMaximumDimension`, which is
+    /// `maximumExportDimension` — deliberately the same bound the export applies
+    /// to its own frames, so that a boost resolved against a preview is the one
+    /// the export will use. It was a smaller, preview-only number until close-up
+    /// detail shipped, on the reasoning that a phone screen could not show more;
+    /// true of the fitted canvas, and false of a setting whose whole visible
+    /// difference lives above it.
     static func frame(at time: CMTime, in url: URL, maximumDimension: Int) async throws -> CVPixelBuffer {
         let generator = AVAssetImageGenerator(asset: AVURLAsset(url: url))
         generator.appliesPreferredTrackTransform = true
