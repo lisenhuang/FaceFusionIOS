@@ -482,12 +482,33 @@ struct StudioView: View {
                 closeUpDetailControl.pickerStyle(.segmented).labelsHidden()
             }
 
-            Text("Sharper faces when a face fills the frame. Small faces cost nothing.")
+            Text(closeUpDetailDescription)
                 .font(.caption2)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
         .onChange(of: model.closeUpDetail) { Task { await model.refreshPreview() } }
+    }
+
+    /// What the chosen level costs and buys, in that order — the cost is the
+    /// part a user cannot discover for themselves without exporting twice.
+    ///
+    /// Each says "small faces cost nothing" rather than saying it once above,
+    /// because the ceiling is the least intuitive thing about the control: the
+    /// slowest option is free on a wide shot, and a caption the user has
+    /// scrolled past does not tell them so at the moment they are choosing.
+    private var closeUpDetailDescription: String {
+        switch model.closeUpDetail {
+        case .standard:
+            return String(localized: "Fastest to export. A face that fills the frame can look soft.",
+                          bundle: .uiLanguage)
+        case .high:
+            return String(localized: "Slower to export, sharper on close-ups. Small faces cost nothing.",
+                          bundle: .uiLanguage)
+        case .maximum:
+            return String(localized: "Slowest to export, sharpest on close-ups. Small faces cost nothing.",
+                          bundle: .uiLanguage)
+        }
     }
 
     private var closeUpDetailControl: some View {

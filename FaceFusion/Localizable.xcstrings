@@ -5282,6 +5282,65 @@
         }
       }
     },
+    "Fastest to export. A face that fills the frame can look soft." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Am schnellsten zu exportieren. Ein bildfüllendes Gesicht kann weich wirken."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La exportación más rápida. Una cara que llena el encuadre puede verse borrosa."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Export le plus rapide. Un visage qui remplit l’image peut paraître flou."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esportazione più rapida. Un viso che riempie l’inquadratura può apparire sfocato."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "書き出しが最速です。画面いっぱいの顔はやや甘くなることがあります。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "내보내기가 가장 빠릅니다. 화면을 가득 채운 얼굴은 흐릿해 보일 수 있습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exportação mais rápida. Um rosto que preenche o quadro pode ficar borrado."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "导出最快。占满画面的人脸可能偏模糊。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "匯出最快。佔滿畫面的人臉可能偏模糊。"
+          }
+        }
+      }
+    },
     "Files" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -12221,65 +12280,6 @@
         }
       }
     },
-    "Sharper faces when a face fills the frame. Small faces cost nothing." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Schärfere Gesichter, wenn ein Gesicht das Bild ausfüllt. Kleine Gesichter kosten nichts."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Rostros más nítidos cuando una cara llena el encuadre. Las caras pequeñas no cuestan nada."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Des visages plus nets quand un visage remplit l’image. Les petits visages ne coûtent rien."
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Volti più nitidi quando un viso riempie l’inquadratura. I volti piccoli non costano nulla."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "顔が画面いっぱいに映るときによりシャープになります。小さな顔では処理は増えません。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "얼굴이 화면을 가득 채울 때 더 선명해집니다. 작은 얼굴은 추가 비용이 없습니다."
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Rostos mais nítidos quando um rosto preenche o quadro. Rostos pequenos não custam nada."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "当人脸占满画面时更清晰。小的人脸不会增加耗时。"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "當人臉佔滿畫面時更清晰。小的人臉不會增加耗時。"
-          }
-        }
-      }
-    },
     "Sharper results and steadier tracking. You can add these later." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -12512,6 +12512,124 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "显示结果"
+          }
+        }
+      }
+    },
+    "Slower to export, sharper on close-ups. Small faces cost nothing." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Langsamer im Export, schärfer bei Nahaufnahmen. Kleine Gesichter kosten nichts."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exportación más lenta, más nítida en primeros planos. Las caras pequeñas no cuestan nada."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Export plus lent, plus net en gros plan. Les petits visages ne coûtent rien."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esportazione più lenta, più nitida nei primi piani. I volti piccoli non costano nulla."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "書き出しは遅くなりますが、クローズアップがシャープになります。小さな顔では処理は増えません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "내보내기는 느려지지만 클로즈업이 더 선명합니다. 작은 얼굴은 추가 비용이 없습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exportação mais lenta, mais nítida em closes. Rostos pequenos não custam nada."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "导出较慢，特写更清晰。小的人脸不会增加耗时。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "匯出較慢，特寫更清晰。小的人臉不會增加耗時。"
+          }
+        }
+      }
+    },
+    "Slowest to export, sharpest on close-ups. Small faces cost nothing." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Am langsamsten im Export, am schärfsten bei Nahaufnahmen. Kleine Gesichter kosten nichts."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La exportación más lenta, la máxima nitidez en primeros planos. Las caras pequeñas no cuestan nada."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Export le plus lent, le plus net en gros plan. Les petits visages ne coûtent rien."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esportazione più lenta, massima nitidezza nei primi piani. I volti piccoli non costano nulla."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "書き出しは最も遅くなりますが、クローズアップが最もシャープになります。小さな顔では処理は増えません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "내보내기가 가장 느리지만 클로즈업이 가장 선명합니다. 작은 얼굴은 추가 비용이 없습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exportação mais lenta, máxima nitidez em closes. Rostos pequenos não custam nada."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "导出最慢，特写最清晰。小的人脸不会增加耗时。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "匯出最慢，特寫最清晰。小的人臉不會增加耗時。"
           }
         }
       }
