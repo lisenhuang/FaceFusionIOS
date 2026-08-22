@@ -15,6 +15,7 @@
 
 import Testing
 import CoreGraphics
+import CoreVideo
 import Foundation
 @testable import Morphiqo
 
@@ -244,6 +245,42 @@ struct FaceSwapperTests {
     /// separate constants in separate types and the feature is wrong the moment
     /// they disagree — the user would be choosing a setting against a frame that
     /// resolves a different boost than the one they will get.
+    /// A frame already within the bound is handed straight back, untouched —
+    /// which is what keeps every video at or below 1080p costing exactly what
+    /// it did before the bound existed.
+    @Test func boundedPassesAConformingFrameThrough() throws {
+        let frame = try PixelSurface.makeBuffer(width: 1920, height: 1080)
+        let result = try VideoPipeline.bounded(frame, to: CGSize(width: 1920, height: 1080))
+        #expect(result === frame)
+    }
+
+    /// And an oversize one comes back at exactly the requested size — not the
+    /// decoder's idea of it. The whole pipeline downstream reads its dimensions
+    /// off this buffer, and the writer's pool is built from the same number.
+    @Test func boundedScalesAnOversizeFrame() throws {
+        let source = CGSize(width: 3840, height: 2160)
+        let frame = try PixelSurface.makeBuffer(width: Int(source.width),
+                                                height: Int(source.height))
+        let result = try VideoPipeline.bounded(frame, to: VideoPipeline.exportSize(for: source))
+
+        #expect(CVPixelBufferGetWidth(result) == 1920)
+        #expect(CVPixelBufferGetHeight(result) == 1080)
+        #expect(result !== frame)
+    }
+
+    /// Portrait 4K bounds on its long edge like everything else — the rotated
+    /// path is the one that used to be handled separately, and separately is
+    /// how it went wrong.
+    @Test func boundedScalesPortraitFootage() throws {
+        let source = CGSize(width: 2160, height: 3840)
+        let frame = try PixelSurface.makeBuffer(width: Int(source.width),
+                                                height: Int(source.height))
+        let result = try VideoPipeline.bounded(frame, to: VideoPipeline.exportSize(for: source))
+
+        #expect(CVPixelBufferGetWidth(result) == 1080)
+        #expect(CVPixelBufferGetHeight(result) == 1920)
+    }
+
     /// `@MainActor` because `AppModel` is, and a static on an isolated type is
     /// isolated with it.
     @MainActor

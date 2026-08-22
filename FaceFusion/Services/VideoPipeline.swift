@@ -149,6 +149,31 @@ enum VideoPipeline {
                       height: max(2, (size.height * scale / 2).rounded() * 2))
     }
 
+    /// `frame` scaled to `size`, or `frame` itself when it already is that size.
+    ///
+    /// The scale is uniform because `exportSize` derived `size` from the frame's
+    /// own aspect ratio; the two axes are computed separately only so that the
+    /// even-pixel rounding it applies is honoured exactly rather than to within
+    /// a rounding of it. `warped` box-prefilters anything shrinking by more than
+    /// half, so a source far above the bound does not alias its way down.
+    static func bounded(_ frame: CVPixelBuffer, to size: CGSize) throws -> CVPixelBuffer {
+        let width = Int(size.width), height = Int(size.height)
+        guard width > 0, height > 0,
+              CVPixelBufferGetWidth(frame) != width || CVPixelBufferGetHeight(frame) != height
+        else { return frame }
+
+        let scaled = try PixelSurface.makeBuffer(width: width, height: height)
+        BGRAImage.wrapping(frame, readOnly: true) { source in
+            let transform = CGAffineTransform(scaleX: CGFloat(width) / CGFloat(source.width),
+                                              y: CGFloat(height) / CGFloat(source.height))
+            let resized = source.warped(by: transform, width: width, height: height)
+            BGRAImage.wrapping(scaled, readOnly: false) { destination in
+                resized.copyContents(into: destination)
+            }
+        }
+        return scaled
+    }
+
     // MARK: Single frames
 
     /// Decodes one upright frame, for the preview canvas.
@@ -442,36 +467,25 @@ enum VideoPipeline {
             kCVPixelBufferMetalCompatibilityKey as String: true,
         ]
 
-        // Scaled on the way out of the decoder rather than after the swap, so
-        // that the frame copy, the detector's read into its 640 canvas and the
-        // paste all run at the exported size instead of the source's — and so
-        // that a face's footprint, which is what `closeUpDetail` resolves its
-        // boost from, is the exported one. AVFoundation does the scaling as part
-        // of decoding, which is both the cheapest place for it and the only one
-        // that also makes the swap itself cheaper.
-        let isDownscaled = displaySize != sourceSize
-
+        // The decoder is deliberately *not* asked to scale, even though a plain
+        // track output would honour `kCVPixelBufferWidthKey` and do it during
+        // decode for free. The composition path cannot: `renderSize` resizes the
+        // canvas a composition draws into without rescaling the layer that draws
+        // there, so rotated footage — which is most of what a phone shoots —
+        // would come out cropped to a corner of the frame rather than scaled,
+        // and only on that path. Bounding each frame in the loop below is one
+        // resample the plain path did not strictly need, in exchange for one
+        // rule that holds for both.
         let videoOutput: AVAssetReaderOutput
         if needsComposition {
             let composition = try await AVMutableVideoComposition.videoComposition(withPropertiesOf: asset)
-            // A composition renders at a size it derives from the asset, and the
-            // pixel-buffer keys below never reach it. This is what keeps the
-            // rotated path — most footage shot on a phone — agreeing with the
-            // plain one instead of writing full-resolution frames into a
-            // bounded writer.
-            if isDownscaled { composition.renderSize = displaySize }
             let output = AVAssetReaderVideoCompositionOutput(videoTracks: [videoTrack],
                                                              videoSettings: videoOutputSettings)
             output.videoComposition = composition
             videoOutput = output
         } else {
-            var settings = videoOutputSettings
-            if isDownscaled {
-                settings[kCVPixelBufferWidthKey as String] = Int(displaySize.width)
-                settings[kCVPixelBufferHeightKey as String] = Int(displaySize.height)
-            }
             videoOutput = AVAssetReaderTrackOutput(track: videoTrack,
-                                                   outputSettings: settings)
+                                                   outputSettings: videoOutputSettings)
         }
         videoOutput.alwaysCopiesSampleData = false
         guard reader.canAdd(videoOutput) else {
@@ -685,12 +699,20 @@ enum VideoPipeline {
             if suspension.isBackgrounded { interrupted = true; break }
 
             guard let sample = videoOutput.copyNextSampleBuffer() else { break }
-            guard let input = CMSampleBufferGetImageBuffer(sample) else { continue }
+            guard let decoded = CMSampleBufferGetImageBuffer(sample) else { continue }
             let presentationTime = CMSampleBufferGetPresentationTimeStamp(sample)
 
             // Resuming lands on the sync sample before the frame we want, so
             // the frames between it and the seam arrive again and are dropped.
+            // Ahead of the bound below, so a dropped frame is never resampled.
             if let startingAfter, presentationTime <= startingAfter { continue }
+
+            // Everything downstream — the frame copy, the detector's read, the
+            // swap, the paste — now runs at the exported size rather than the
+            // source's, and the face footprint `closeUpDetail` resolves its
+            // boost from is the exported one. A frame already within the bound
+            // is returned untouched, so this costs nothing at 1080p and below.
+            let input = try Self.bounded(decoded, to: displaySize)
 
             let width = CVPixelBufferGetWidth(input)
             let height = CVPixelBufferGetHeight(input)
@@ -709,21 +731,10 @@ enum VideoPipeline {
                 guard status == kCVReturnSuccess, let pooled else {
                     throw MediaError.pixelBuffer("The encoder ran out of frame buffers.")
                 }
-                // The pool is built at the size the writer was configured with,
-                // and the decoder is asked for that same size — but only the
-                // writer's half of that is ours to guarantee. Rather than trust
-                // the two to agree, check: the engine requires its source and
-                // destination to be the same size and asserts it with a
-                // `precondition`, so a decoder that rounded differently would
-                // take the export down with a trap instead of an error. An
-                // off-size frame is worth an honest failure at `append`, not a
-                // crash here.
-                if CVPixelBufferGetWidth(pooled) == width,
-                   CVPixelBufferGetHeight(pooled) == height {
-                    output = pooled
-                } else {
-                    output = try PixelSurface.makeBuffer(width: width, height: height)
-                }
+                // Both sides are `displaySize` by construction now — the pool
+                // from the writer's settings, the input from `bounded` — so
+                // there is nothing here to reconcile.
+                output = pooled
             } else {
                 output = try PixelSurface.makeBuffer(width: width, height: height)
             }
