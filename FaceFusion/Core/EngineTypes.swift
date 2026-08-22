@@ -359,6 +359,35 @@ enum FaceSelection: Codable, Sendable, Equatable {
 /// keep two different people apart.
 let defaultFaceMatchDistance = 0.6
 
+/// How much detail the swapper is allowed to generate for a large face.
+///
+/// The swapper's graph is fixed at 128x128, so a face occupying more than that
+/// in the frame is enlarged on the way back in and arrives softer than the
+/// pixels around it. Pixel boost buys real detail by running the same graph
+/// over several sub-pixel phases of a larger crop and interleaving the results
+/// — see `FaceSwapper.swap(image:landmarks:conditioning:boost:)`.
+///
+/// This is a **ceiling, not a fixed cost**. The factor actually used is chosen
+/// per face from its footprint, so a face already smaller than 128 costs one
+/// pass at every setting and a wide shot is untouched by the choice.
+enum CloseUpDetail: String, Codable, Sendable, CaseIterable {
+    /// One pass. Bit-for-bit what every build before this one did.
+    case standard
+    /// Up to 4 passes, generating at most 256px of face.
+    case high
+    /// Up to 16 passes, generating at most 512px of face.
+    case maximum
+
+    /// The largest boost factor this level permits. Passes cost the square.
+    var boostCeiling: Int {
+        switch self {
+        case .standard: return 1
+        case .high:     return 2
+        case .maximum:  return 4
+        }
+    }
+}
+
 struct SwapOptions: Codable, Sendable {
     var selection: FaceSelection
     /// 0 keeps more of the target's identity, 1 pushes fully to the source.
@@ -376,6 +405,8 @@ struct SwapOptions: Codable, Sendable {
     var detectorScore: Double
     /// Use the 68-point landmarker to refine alignment when available.
     var refineLandmarks: Bool
+    /// Ceiling on the swapper's pixel boost. See `CloseUpDetail`.
+    var closeUpDetail: CloseUpDetail
 
     init(selection: FaceSelection = .all,
          identityStrength: Double = 0.5,
@@ -384,7 +415,8 @@ struct SwapOptions: Codable, Sendable {
          maskBlur: Double = 0.3,
          maskOcclusion: Bool = true,
          detectorScore: Double = 0.5,
-         refineLandmarks: Bool = true) {
+         refineLandmarks: Bool = true,
+         closeUpDetail: CloseUpDetail = .high) {
         self.selection = selection
         self.identityStrength = identityStrength
         self.enhanceFace = enhanceFace
@@ -393,6 +425,39 @@ struct SwapOptions: Codable, Sendable {
         self.maskOcclusion = maskOcclusion
         self.detectorScore = detectorScore
         self.refineLandmarks = refineLandmarks
+        self.closeUpDetail = closeUpDetail
+    }
+
+    /// Decoded field by field rather than by synthesis, so that a blob written
+    /// by an older build — which has no `closeUpDetail` key at all — still
+    /// decodes instead of throwing `keyNotFound`. Swift's synthesised decoder
+    /// ignores a property's default value and requires every key to be present,
+    /// which is exactly the upgrade this app cannot afford: the settings store
+    /// on an installed device predates every field added from here on.
+    ///
+    /// Every key is optional for the same reason, so the next field added needs
+    /// only a default and not another rewrite of this initialiser.
+    init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        let fallback = SwapOptions()
+        selection = try container.decodeIfPresent(FaceSelection.self, forKey: .selection)
+            ?? fallback.selection
+        identityStrength = try container.decodeIfPresent(Double.self, forKey: .identityStrength)
+            ?? fallback.identityStrength
+        enhanceFace = try container.decodeIfPresent(Bool.self, forKey: .enhanceFace)
+            ?? fallback.enhanceFace
+        enhancementBlend = try container.decodeIfPresent(Double.self, forKey: .enhancementBlend)
+            ?? fallback.enhancementBlend
+        maskBlur = try container.decodeIfPresent(Double.self, forKey: .maskBlur)
+            ?? fallback.maskBlur
+        maskOcclusion = try container.decodeIfPresent(Bool.self, forKey: .maskOcclusion)
+            ?? fallback.maskOcclusion
+        detectorScore = try container.decodeIfPresent(Double.self, forKey: .detectorScore)
+            ?? fallback.detectorScore
+        refineLandmarks = try container.decodeIfPresent(Bool.self, forKey: .refineLandmarks)
+            ?? fallback.refineLandmarks
+        closeUpDetail = try container.decodeIfPresent(CloseUpDetail.self, forKey: .closeUpDetail)
+            ?? fallback.closeUpDetail
     }
 }
 

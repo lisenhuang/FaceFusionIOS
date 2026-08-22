@@ -131,14 +131,21 @@ final class AppModel {
 
     /// Long edge a video frame is decoded to for the preview.
     ///
-    /// Swapping a 4K frame costs several times what swapping a 1280px one
-    /// does, and the difference is invisible on a phone screen. It is safe
-    /// precisely because the export does not reuse this: it decodes the source
-    /// file again, at its own resolution, and swaps again with the settings as
-    /// they stand when Export is pressed.
+    /// Deliberately the same number the *export* caps itself to
+    /// (`VideoPipeline.maximumExportDimension`), and that is the whole point:
+    /// the two must agree or the preview stops being a preview. `closeUpDetail`
+    /// resolves per face from the face's footprint in the frame it is handed,
+    /// so a preview decoded smaller than the export would resolve a lower boost
+    /// and quietly render something the export will not produce — the user would
+    /// be choosing a setting against a picture that misrepresents it.
+    ///
+    /// It was 1280 until close-up detail shipped, on the reasoning that a phone
+    /// screen cannot show more. True of the fitted canvas, but false of the
+    /// pinch zoom, and false of this setting, whose entire visible difference
+    /// lives above 1280.
     ///
     /// A *photo* target is deliberately not capped — see `setImageTarget`.
-    static let previewMaximumDimension = 1280
+    static let previewMaximumDimension = VideoPipeline.maximumExportDimension
 
     /// How much smaller the previewed frame is than the media itself, 1 when
     /// they are the same.
@@ -176,6 +183,11 @@ final class AppModel {
     var identityStrength: Double {
         get { Preferences.shared.identityStrength }
         set { Preferences.shared.identityStrength = newValue }
+    }
+
+    var closeUpDetail: CloseUpDetail {
+        get { Preferences.shared.closeUpDetail }
+        set { Preferences.shared.closeUpDetail = newValue }
     }
 
     var maskBlur: Double {
@@ -402,6 +414,33 @@ final class AppModel {
         }
     }
 
+    /// The boost `closeUpDetail` actually resolves to on the previewed frame,
+    /// or `nil` when there is nothing to resolve it against yet.
+    ///
+    /// The largest of the faces that would be replaced, because that is the one
+    /// setting the cost and the one the user is looking at. It answers with the
+    /// same function the engine uses, on the same landmarks, against a preview
+    /// frame now decoded to the export's own bound — so this is the number that
+    /// will be used, not an estimate of it.
+    var closeUpDetailInUse: Int? {
+        let selected = selectedFaceIndices
+        guard !selected.isEmpty else { return nil }
+
+        let ceiling = closeUpDetail.boostCeiling
+        var resolved: Int?
+        for face in previewFaces where selected.contains(face.index) {
+            // `similarityTransform` requires a point per template entry and
+            // traps on a mismatch, so a detection carrying anything other than
+            // the five it should is skipped rather than trusted.
+            guard face.landmarks.count == 5,
+                  face.landmarks.allSatisfy({ $0.count >= 2 }) else { continue }
+            let points = face.landmarks.map { CGPoint(x: $0[0], y: $0[1]) }
+            let boost = FaceSwapper.boost(landmarks: points, ceiling: ceiling)
+            resolved = max(resolved ?? 1, boost)
+        }
+        return resolved
+    }
+
     /// Index into `previewFaces` of the face whose centre is closest to a
     /// point in frame pixels.
     private func nearestFace(to point: CGPoint) -> Int? {
@@ -430,7 +469,8 @@ final class AppModel {
                     // Kept on for both source and target. The source identity is
                     // encoded once at selection time, so flipping this per job
                     // would align the two differently and weaken the match.
-                    refineLandmarks: true)
+                    refineLandmarks: true,
+                    closeUpDetail: closeUpDetail)
     }
 
     // MARK: - Engine lifecycle

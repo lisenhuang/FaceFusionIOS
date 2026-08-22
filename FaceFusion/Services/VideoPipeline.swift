@@ -119,6 +119,36 @@ enum VideoPipeline {
         }
     }
 
+    // MARK: Output size
+
+    /// Long edge an exported video is bounded to.
+    ///
+    /// Not a quality budget so much as the thing that makes the quality budget
+    /// spendable. `closeUpDetail` matches a face by generating as many pixels as
+    /// the face occupies, and the passes it costs grow with the square of that:
+    /// an ordinary close-up is ~510px of face at this bound and 16 passes, but
+    /// the same shot at 4K is ~1000px and would want 64. So 4K does not buy a
+    /// sharper face, it buys the same soft face in a heavier file — bounding the
+    /// frame is what puts a match inside reach at all.
+    ///
+    /// It bounds the *long* edge, so footage shot in portrait stays portrait.
+    static let maximumExportDimension = 1920
+
+    /// `size` bounded to `maximumExportDimension`, preserving aspect ratio.
+    ///
+    /// Returns `size` untouched when it already fits, so every video at or below
+    /// the bound — which is most of them — encodes at exactly the dimensions it
+    /// always did. Only a downscale rounds to even dimensions, which 4:2:0
+    /// chroma requires and which the uncapped path never had to promise.
+    static func exportSize(for size: CGSize) -> CGSize {
+        let longest = max(size.width, size.height)
+        guard longest > CGFloat(maximumExportDimension), longest > 0 else { return size }
+
+        let scale = CGFloat(maximumExportDimension) / longest
+        return CGSize(width: max(2, (size.width * scale / 2).rounded() * 2),
+                      height: max(2, (size.height * scale / 2).rounded() * 2))
+    }
+
     // MARK: Single frames
 
     /// Decodes one upright frame, for the preview canvas.
@@ -387,8 +417,9 @@ enum VideoPipeline {
         let (naturalSize, preferredTransform, nominalRate) = try await videoTrack.load(
             .naturalSize, .preferredTransform, .nominalFrameRate)
         let rotated = naturalSize.applying(preferredTransform)
-        let displaySize = CGSize(width: abs(rotated.width).rounded(),
-                                 height: abs(rotated.height).rounded())
+        let sourceSize = CGSize(width: abs(rotated.width).rounded(),
+                                height: abs(rotated.height).rounded())
+        let displaySize = Self.exportSize(for: sourceSize)
 
         // The engine expects upright faces. Rather than rotating every frame
         // ourselves, hand the reader a video composition and let AVFoundation
@@ -411,16 +442,36 @@ enum VideoPipeline {
             kCVPixelBufferMetalCompatibilityKey as String: true,
         ]
 
+        // Scaled on the way out of the decoder rather than after the swap, so
+        // that the frame copy, the detector's read into its 640 canvas and the
+        // paste all run at the exported size instead of the source's — and so
+        // that a face's footprint, which is what `closeUpDetail` resolves its
+        // boost from, is the exported one. AVFoundation does the scaling as part
+        // of decoding, which is both the cheapest place for it and the only one
+        // that also makes the swap itself cheaper.
+        let isDownscaled = displaySize != sourceSize
+
         let videoOutput: AVAssetReaderOutput
         if needsComposition {
             let composition = try await AVMutableVideoComposition.videoComposition(withPropertiesOf: asset)
+            // A composition renders at a size it derives from the asset, and the
+            // pixel-buffer keys below never reach it. This is what keeps the
+            // rotated path — most footage shot on a phone — agreeing with the
+            // plain one instead of writing full-resolution frames into a
+            // bounded writer.
+            if isDownscaled { composition.renderSize = displaySize }
             let output = AVAssetReaderVideoCompositionOutput(videoTracks: [videoTrack],
                                                              videoSettings: videoOutputSettings)
             output.videoComposition = composition
             videoOutput = output
         } else {
+            var settings = videoOutputSettings
+            if isDownscaled {
+                settings[kCVPixelBufferWidthKey as String] = Int(displaySize.width)
+                settings[kCVPixelBufferHeightKey as String] = Int(displaySize.height)
+            }
             videoOutput = AVAssetReaderTrackOutput(track: videoTrack,
-                                                   outputSettings: videoOutputSettings)
+                                                   outputSettings: settings)
         }
         videoOutput.alwaysCopiesSampleData = false
         guard reader.canAdd(videoOutput) else {
@@ -658,7 +709,21 @@ enum VideoPipeline {
                 guard status == kCVReturnSuccess, let pooled else {
                     throw MediaError.pixelBuffer("The encoder ran out of frame buffers.")
                 }
-                output = pooled
+                // The pool is built at the size the writer was configured with,
+                // and the decoder is asked for that same size — but only the
+                // writer's half of that is ours to guarantee. Rather than trust
+                // the two to agree, check: the engine requires its source and
+                // destination to be the same size and asserts it with a
+                // `precondition`, so a decoder that rounded differently would
+                // take the export down with a trap instead of an error. An
+                // off-size frame is worth an honest failure at `append`, not a
+                // crash here.
+                if CVPixelBufferGetWidth(pooled) == width,
+                   CVPixelBufferGetHeight(pooled) == height {
+                    output = pooled
+                } else {
+                    output = try PixelSurface.makeBuffer(width: width, height: height)
+                }
             } else {
                 output = try PixelSurface.makeBuffer(width: width, height: height)
             }

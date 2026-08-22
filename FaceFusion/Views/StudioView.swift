@@ -439,6 +439,12 @@ struct StudioView: View {
     private var adjustments: some View {
         VStack(alignment: .leading, spacing: 16) {
             SectionLabel("Settings")
+            // First, and above "Which face" rather than beside the other
+            // quality knobs, for a layout reason as much as a billing one:
+            // `faceSection` grows a whole scrollable list of people in `.chosen`
+            // mode, and anything under it goes off the bottom of a small screen
+            // exactly when the user is most likely to be tuning.
+            closeUpDetailPicker
             faceSection
             resemblanceSlider
             edgeSoftnessSlider
@@ -450,6 +456,56 @@ struct StudioView: View {
                 codecToggle
             }
         }
+    }
+
+    private var closeUpDetailPicker: some View {
+        @Bindable var model = model
+
+        return VStack(alignment: .leading, spacing: 6) {
+            HStack {
+                Text("Close-up detail").font(.callout)
+                Spacer()
+                // Without this the control looks broken on a wide shot: the user
+                // moves it to Maximum, nothing changes, and nothing on screen
+                // admits that nothing was supposed to. It is a ceiling, and this
+                // is the line that says what the ceiling resolved to.
+                Text(closeUpDetailHint)
+                    .font(.caption.monospacedDigit())
+                    .foregroundStyle(.secondary)
+            }
+
+            // Segmented normally, a menu at accessibility sizes — the same
+            // trade `faceSection` makes, and for the same reason.
+            if dynamicTypeSize.isAccessibilitySize {
+                closeUpDetailControl.pickerStyle(.menu).labelsHidden()
+            } else {
+                closeUpDetailControl.pickerStyle(.segmented).labelsHidden()
+            }
+
+            Text("Sharper faces when a face fills the frame. Small faces cost nothing.")
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .onChange(of: model.closeUpDetail) { Task { await model.refreshPreview() } }
+    }
+
+    private var closeUpDetailControl: some View {
+        @Bindable var model = model
+
+        return Picker("Close-up detail", selection: $model.closeUpDetail) {
+            Text("Standard").tag(CloseUpDetail.standard)
+            Text("High").tag(CloseUpDetail.high)
+            Text("Maximum").tag(CloseUpDetail.maximum)
+        }
+    }
+
+    /// What the setting resolves to on the face the preview is actually showing.
+    private var closeUpDetailHint: String {
+        guard let boost = model.closeUpDetailInUse else { return "" }
+        return boost > 1
+            ? String(localized: "\(boost)× here", bundle: .uiLanguage)
+            : String(localized: "Not needed here", bundle: .uiLanguage)
     }
 
     private var faceSection: some View {

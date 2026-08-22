@@ -114,6 +114,10 @@ final class Preferences {
         didSet { defaults.set(matchDistance, forKey: Key.matchDistance) }
     }
 
+    var closeUpDetail: CloseUpDetail {
+        didSet { defaults.set(closeUpDetail.rawValue, forKey: Key.closeUpDetail) }
+    }
+
     // MARK: - Output
 
     var useHEVC: Bool {
@@ -180,6 +184,7 @@ final class Preferences {
             Key.identityStrength: 0.5,
             Key.maskBlur: 0.3,
             Key.matchDistance: defaultFaceMatchDistance,
+            Key.closeUpDetail: CloseUpDetail.high.rawValue,
             Key.useHEVC: true,
             Key.savesToPhotos: true,
             Key.hasCompletedOnboarding: false,
@@ -199,6 +204,15 @@ final class Preferences {
         identityStrength = defaults.double(forKey: Key.identityStrength)
         maskBlur = defaults.double(forKey: Key.maskBlur)
         matchDistance = defaults.double(forKey: Key.matchDistance)
+
+        // Absent on every device upgrading from an older build, which is why it
+        // is registered above rather than written: the registration answers with
+        // `.high`, the intended default, instead of the empty string a missing
+        // key would otherwise give. Falls back for the same reason `theme` and
+        // `compute` do — a raw value stored by a build that spelled a case
+        // differently must not decode to nothing.
+        closeUpDetail = CloseUpDetail(rawValue: defaults.string(forKey: Key.closeUpDetail) ?? "")
+            ?? .high
 
         useHEVC = defaults.bool(forKey: Key.useHEVC)
         savesToPhotos = defaults.bool(forKey: Key.savesToPhotos)
@@ -234,6 +248,7 @@ final class Preferences {
         static let identityStrength = "swap.identityStrength"
         static let maskBlur = "swap.maskBlur"
         static let matchDistance = "swap.matchDistance"
+        static let closeUpDetail = "swap.closeUpDetail"
         static let useHEVC = "output.useHEVC"
         static let savesToPhotos = "output.savesToPhotos"
         static let hasCompletedOnboarding = "onboarding.completed"
