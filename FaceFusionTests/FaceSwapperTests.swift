@@ -131,10 +131,17 @@ struct FaceSwapperTests {
     }
 
     /// The factor tracks the footprint, one phase per 128 pixels of face.
-    @Test(arguments: [(200, 2), (256, 2), (300, 3), (384, 3), (500, 4), (512, 4)])
-    func boostTracksFootprint(footprint: Int, expected: Int) {
-        #expect(FaceSwapper.boost(landmarks: landmarks(footprint: footprint),
-                                  ceiling: 4) == expected)
+    ///
+    /// Written as a loop rather than `@Test(arguments:)` over tuples: the
+    /// parameterised overloads take one collection per parameter, and a single
+    /// collection of pairs is the shape that does not resolve.
+    @Test func boostTracksFootprint() {
+        for (footprint, expected) in [(200, 2), (256, 2), (300, 3),
+                                      (384, 3), (500, 4), (512, 4)] {
+            #expect(FaceSwapper.boost(landmarks: landmarks(footprint: footprint),
+                                      ceiling: 4) == expected,
+                    "footprint \(footprint)")
+        }
     }
 
     /// A face barely over a level does not pay the next one. The step costs
