@@ -125,8 +125,15 @@ struct FaceSwapper {
         // paying for: a face up to `1 + tolerance` times a level stays on it,
         // so the worst enlargement anyone sees is 15%, well under the ~50%
         // where an enlarged patch starts reading as soft against its frame.
-        let needed = Int((1 / scale - Self.boostTolerance).rounded(.up))
-        return max(1, min(needed, limit))
+        // Compared before converting, never after: landmarks that are nearly
+        // coincident — a detection collapsing on a blurred or tiny face — give a
+        // scale small enough that `1 / scale` overflows `Int`, and `Int(_:)`
+        // traps on that rather than saturating.
+        let wanted = (1 / scale - Self.boostTolerance).rounded(.up)
+        guard wanted.isFinite else { return 1 }
+        if wanted <= 1 { return 1 }
+        if wanted >= CGFloat(limit) { return limit }
+        return Int(wanted)
     }
 
     /// Runs the swap at `boost` × the graph's native resolution.
@@ -170,6 +177,12 @@ struct FaceSwapper {
 
         for by in 0 ..< factor {
             for bx in 0 ..< factor {
+                // One frame is up to sixteen inference passes now, so a
+                // cancelled export or a backgrounded app would otherwise keep a
+                // frame running long after everything above it stopped caring.
+                // The unboosted path is a single pass and never needed this.
+                try Task.checkCancellation()
+
                 let target = Self.subFrame(of: crop, boost: factor, x: bx, y: by)
                 let outputs = try model.run(["target": target, "source": source])
                 guard let result = outputs[model.outputNames[0]] else {
