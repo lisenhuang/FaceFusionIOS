@@ -942,27 +942,19 @@ struct StudioView: View {
     /// and reopened where it left off — but "pauses until you come back" is
     /// still a worse outcome than not leaving, and it is the sort of thing a
     /// user will only learn by losing ten minutes to it once.
+    /// Deliberately quiet: no icon, no tinted panel, no border. An export is
+    /// something the user just asked for and is watching succeed, and dressing
+    /// the one note on that screen as a warning read as though something had
+    /// gone wrong. Secondary footnote is the same weight the rest of the
+    /// studio's guidance carries, which is what this is — guidance, not an
+    /// alert. The wording still leads with the instruction, so it reads at a
+    /// glance without needing a colour to carry it.
     private var stayOnScreenNotice: some View {
-        HStack(alignment: .firstTextBaseline, spacing: 8) {
-            Image(systemName: "exclamationmark.triangle.fill")
-                .foregroundStyle(.orange)
-                .accessibilityHidden(true)
-            Text("Keep Morphiqo on screen. Leaving the app pauses the export until you come back.")
-                .font(.footnote.weight(.semibold))
-                .fixedSize(horizontal: false, vertical: true)
-            Spacer(minLength: 0)
-        }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 8)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background {
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                .fill(Color.orange.opacity(0.14))
-                .overlay {
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .strokeBorder(Color.orange.opacity(0.45), lineWidth: 1)
-                }
-        }
+        Text("Keep Morphiqo on screen. Leaving the app pauses the export until you come back.")
+            .font(.footnote)
+            .foregroundStyle(.secondary)
+            .fixedSize(horizontal: false, vertical: true)
+            .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var renderingProgressRow: some View {
